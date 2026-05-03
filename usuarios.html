@@ -1,306 +1,364 @@
 <!DOCTYPE html>
 <html lang="es">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FRESA CON CREMA - Usuarios</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Añade Font Awesome -->
+    <title>Usuarios - FRESA CON CREMA</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="../assets/css/styles.css">
-    <link rel="stylesheet" href="../assets/css/usuario.css">
-    <script src="../assets/js/auth.js" defer></script>
-    <script src="../assets/js/mobile-menu.js" defer></script>
-    <script src="../assets/js/usuarios.js" defer></script>
-    <script>
-        // Verificar autenticación al cargar
-        document.addEventListener('DOMContentLoaded', function () {
-            if (!window.auth.initializeProtectedPage()) return;
-
-            // Mostrar nombre de usuario en el header
-            const user = window.auth.getCurrentUser();
-            const userSpan = document.querySelector('.user-profile span');
-            if (user && userSpan) {
-                userSpan.textContent = user.nombre || 'Administrador';
-            }
-        });
-    </script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f7fa;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        header {
+            background: linear-gradient(135deg, #7c0303, #ff00b3, #ffe600);
+            color: white;
+            padding: 20px;
+            border-radius: 8px 8px 0 0;
+        }
+        .controls {
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            border-bottom: 1px solid #ddd;
+        }
+        .btn-nuevo {
+            background: #3a7bd5;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background: #f8fafc;
+            font-weight: 600;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+            z-index: 1000;
+            width: 400px;
+        }
+        .modal.active {
+            display: block;
+        }
+        .overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 999;
+        }
+        .overlay.active {
+            display: block;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .form-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 20px;
+        }
+        .btn-guardar {
+            background: #3a7bd5;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .btn-cancelar {
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .btn-editar {
+            background: #ffc107;
+            color: #333;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 5px;
+        }
+        .btn-eliminar {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+    </style>
 </head>
-
-<body class="bg-gray-100">
-    <!-- Header -->
-    <header class="header">
-        <div class="container">
-            <div class="header-content">
-                <button id="hamburgerBtn" class="hamburger-btn" style="display: none;">
-                    ☰
-                </button>
-                <div class="logo-section">
-                    <div class="logo-icon">🍓</div>
-                    <div class="logo-text">
-                        <h1>FRESA CON CREMA</h1>
-                        <p>Tu Antojito</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="header-actions">
-            <button class="icon-btn">🔔<span class="badge">3</span></button>
-            <button class="icon-btn" onclick="window.location.href='carrito.html'">
-                🛒
-                <span class="badge" id="cartBadge" style="display: none;">0</span>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-users"></i> Lista de Usuarios</h1>
+        </header>
+        
+        <div class="controls">
+            <button class="btn-nuevo" id="btnNuevo">
+                <i class="fas fa-plus"></i> Nuevo Usuario
             </button>
-            <div class="user-profile" id="user.foto">
-                <img src="${escapeHtml(usuario.foto)}" alt="Foto" class="fas fa-user-circle fa-2x"
-                    style="color: #3a7bd5;">
-                <span id="userName">Administrador</span>
+            <div>
+                <input type="text" id="searchInput" placeholder="Buscar...">
+                <button id="btnSearch">Buscar</button>
             </div>
         </div>
-    </header>
-
-    <div class="flex">
-        <!-- Sidebar (igual en todas las páginas) -->
-        <aside id="sidebar" class="sidebar">
-            <nav class="mt-8">
-                <a href="dashboard.html" class="nav-item">
-                    <span class="nav-icon">🏠</span>
-                    <span>Dashboard</span>
-                </a>
-                <a href="productos.html" class="nav-item">
-                    <span class="nav-icon">🍓</span>
-                    <span>Productos</span>
-                </a>
-                <a href="carrito.html" class="nav-item">
-                    <span class="nav-icon">🛒</span>
-                    <span>Carrito</span>
-                    <span class="cart-badge-mobile" id="cartBadgeMobile">0</span>
-                </a>
-                <a href="analiticas.html" class="nav-item">
-                    <span class="nav-icon">📊</span>
-                    <span>Analíticas</span>
-                </a>
-                <a href="usuarios.html" class="nav-item active">
-                    <span class="nav-icon">👥</span>
-                    <span>Usuarios</span>
-                </a>
-                <a href="orders.html" class="nav-item">
-                    <span class="nav-icon">📋</span>
-                    <span>Pedidos</span>
-                </a>
-                <a href="configuracion.html" class="nav-item">
-                    <span class="nav-icon">⚙️</span>
-                    <span>Configuracion</span>
-                </a>
-            </nav>
-        </aside>
-
-        <!-- Overlay para móvil -->
-        <div id="sidebarOverlay" class="sidebar-overlay"></div>
-
-        <!-- Main Content -->
-        <main class="main-content" style="flex: 1; padding: 1.5rem; overflow-x: hidden;">
-            <!-- Overlay para formulario flotante -->
-            <div id="overlay" class="overlay"></div>
-
-            <!-- Formulario flotante para nuevo usuario -->
-            <div id="formulario-usuario" class="formulario-flotante">
-                <div class="form-header">
-                    <h2><i class="fas fa-user-plus"></i> Nuevo Usuario</h2>
-                    <button id="cerrar-formulario" class="btn-cerrar">
-                        <i class="fas fa-times"></i>
-                    </button>
-                </div>
-
-                <form id="form-nuevo-usuario">
-                    <div class="form-group">
-                        <label for="nombre-usuario">
-                            <i class="fas fa-user"></i> Nombre de Usuario
-                        </label>
-                        <input type="text" id="nombre-usuario" required placeholder="Ingrese el nombre de usuario">
-                        <div class="error-message" id="error-nombre"></div>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="correo-usuario">
-                            <i class="fas fa-envelope"></i> Correo Electrónico
-                        </label>
-                        <input type="email" id="correo-usuario" required placeholder="ejemplo@correo.com">
-                        <div class="error-message" id="error-correo"></div>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="rol-usuario">
-                            <i class="fas fa-user-tag"></i> Rol
-                        </label>
-                        <select id="rol-usuario" required>
-                            <option value="">Seleccione un rol</option>
-                            <option value="vendedor">Vendedor</option>
-                            <option value="vendedor1">Vendedor 1</option>
-                            <option value="supervisor">Supervisor</option>
-                            <option value="admin">Administrador</option>
-                        </select>
-                        <div class="error-message" id="error-rol"></div>
-                    </div>
-
-                    <!-- NUEVO: Campo para Foto de perfil -->
-                    <div class="form-group">
-                        <label for="foto-usuario">
-                            <i class="fas fa-image"></i> Foto de Perfil
-                        </label>
-                        <div class="foto-preview-container">
-                            <div class="foto-preview" id="fotoPreview">
-                                <i class="fas fa-user-circle fa-3x" style="color: #3a7bd5;"></i>
-                            </div>
-                            <div class="foto-input-wrapper">
-                                <input type="file" id="foto-usuario" accept="image/*" style="display: none;">
-                                <button type="button" id="btn-subir-foto" class="btn-subir-foto">
-                                    <i class="fas fa-upload"></i> Seleccionar Foto
-                                </button>
-                            </div>
-                        </div>
-                        <div class="error-message" id="error-foto"></div>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="password-usuario">
-                            <i class="fas fa-lock"></i> Contraseña
-                        </label>
-                        <input type="password" id="password-usuario" required placeholder="Mínimo 6 caracteres">
-                        <div class="error-message" id="error-password"></div>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="confirmar-password">
-                            <i class="fas fa-lock"></i> Confirmar Contraseña
-                        </label>
-                        <input type="password" id="confirmar-password" required placeholder="Repita la contraseña">
-                        <div class="error-message" id="error-confirmar"></div>
-                    </div>
-
-                    <div class="form-buttons">
-                        <button type="button" id="cancelar-formulario" class="btn-cancelar">
-                            <i class="fas fa-times"></i> Cancelar
-                        </button>
-                        <button type="submit" class="btn-guardar">
-                            <i class="fas fa-save"></i> Guardar Usuario
-                        </button>
-                    </div>
-                </form>
-            </div>
-
-            <div class="Container">
-
-                <header>
-                    <h1><i class="fas fa-users"></i> Lista de Usuarios</h1>
-                </header>
-
-                <div class="controls">
-                    <button id="btn-nuevo" class="btn-nuevo">
-                        <i class="fas fa-plus"></i> Nuevo
-                    </button>
-
-                    <div class="search-container">
-                        <div class="records-show">
-                            <label>Mostrar</label>
-                            <select id="records-per-page">
-                                <option value="5">5</option>
-                                <option value="10">10</option>
-                                <option value="20">20</option>
-                                <option value="50">50</option>
-                            </select>
-                            <label>registros</label>
-                        </div>
-
-                        <div class="search-box">
-                            <input type="text" id="search-input" placeholder="Buscar...">
-                            <button class="btn-search"><i class="fas fa-search"></i></button>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="table-container">
-                    <table id="usuarios-table">
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>Usuario</th>
-                                <th>Correo</th>
-                                <th>Rol</th>
-                                <th>Contraseña</th>
-                                <th>Foto</th>
-                                <th>Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody id="usuarios-body">
-                            <!-- Los datos se cargarán dinámicamente con JavaScript -->
-                        </tbody>
-                    </table>
-                </div>
-
-                <div class="pagination-info">
-                    <div id="records-info">Mostrando 1 a 3 de 3 registros</div>
-
-                    <div class="pagination-controls">
-                        <button id="first-page" class="pagination-btn" disabled>
-                            <i class="fas fa-fast-backward"></i> Primero
-                        </button>
-                        <button id="prev-page" class="pagination-btn" disabled>
-                            <i class="fas fa-backward"></i> Anterior
-                        </button>
-                        <span id="current-page" class="page-number">1</span>
-                        <button id="next-page" class="pagination-btn" disabled>
-                            Siguiente <i class="fas fa-forward"></i>
-                        </button>
-                        <button id="last-page" class="pagination-btn" disabled>
-                            Último <i class="fas fa-fast-forward"></i>
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </main>
+        
+        <div class="table-container">
+            <table id="tablaUsuarios">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Usuario</th>
+                        <th>Correo</th>
+                        <th>Rol</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="usuariosBody">
+                    <tr>
+                        <td>1</td>
+                        <td>admin</td>
+                        <td>admin@example.com</td>
+                        <td>Administrador</td>
+                        <td>
+                            <button class="btn-editar">Editar</button>
+                            <button class="btn-eliminar">Eliminar</button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
     </div>
-
+    
+    <div class="overlay" id="overlay"></div>
+    <div class="modal" id="modalUsuario">
+        <h2 id="modalTitulo">Nuevo Usuario</h2>
+        <form id="formUsuario">
+            <div class="form-group">
+                <label>Nombre de Usuario:</label>
+                <input type="text" id="nombreUsuario" required>
+            </div>
+            <div class="form-group">
+                <label>Correo Electrónico:</label>
+                <input type="email" id="correoUsuario" required>
+            </div>
+            <div class="form-group">
+                <label>Rol:</label>
+                <select id="rolUsuario">
+                    <option value="vendedor">Vendedor</option>
+                    <option value="supervisor">Supervisor</option>
+                    <option value="admin">Administrador</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Contraseña:</label>
+                <input type="password" id="password" required>
+            </div>
+            <div class="form-buttons">
+                <button type="button" class="btn-cancelar" id="btnCancelar">Cancelar</button>
+                <button type="submit" class="btn-guardar">Guardar</button>
+            </div>
+        </form>
+    </div>
+    
     <script>
-        // Inicializar el menú móvil
-        document.addEventListener('DOMContentLoaded', function () {
-            const hamburgerBtn = document.getElementById('hamburgerBtn');
-            const sidebar = document.getElementById('sidebar');
-            const sidebarOverlay = document.getElementById('sidebarOverlay');
-
-            if (hamburgerBtn && sidebar && sidebarOverlay) {
-                hamburgerBtn.addEventListener('click', function () {
-                    sidebar.classList.toggle('mobile-open');
-                    sidebarOverlay.classList.toggle('active');
-                    hamburgerBtn.classList.toggle('active');
-                });
-
-                sidebarOverlay.addEventListener('click', function () {
-                    sidebar.classList.remove('mobile-open');
-                    sidebarOverlay.classList.remove('active');
-                    hamburgerBtn.classList.remove('active');
-                });
+        // Datos de ejemplo
+        let usuarios = [
+            { id: 1, usuario: "admin", correo: "admin@fresaconcrema.com", rol: "admin", password: "admin123" },
+            { id: 2, usuario: "yorby", correo: "yorby@example.com", rol: "vendedor", password: "123456" }
+        ];
+        
+        let editandoId = null;
+        
+        function mostrarUsuarios() {
+            const tbody = document.getElementById('usuariosBody');
+            tbody.innerHTML = '';
+            
+            usuarios.forEach(usuario => {
+                const fila = document.createElement('tr');
+                const rolTexto = usuario.rol === 'admin' ? 'Administrador' : 
+                               usuario.rol === 'supervisor' ? 'Supervisor' : 'Vendedor';
+                
+                fila.innerHTML = `
+                    <td>${usuario.id}</td>
+                    <td>${usuario.usuario}</td>
+                    <td>${usuario.correo}</td>
+                    <td>${rolTexto}</td>
+                    <td>
+                        <button class="btn-editar" onclick="editarUsuario(${usuario.id})">Editar</button>
+                        <button class="btn-eliminar" onclick="eliminarUsuario(${usuario.id})">Eliminar</button>
+                    </td>
+                `;
+                tbody.appendChild(fila);
+            });
+        }
+        
+        function abrirModal(editar = false) {
+            document.getElementById('overlay').classList.add('active');
+            document.getElementById('modalUsuario').classList.add('active');
+            
+            if (!editar) {
+                document.getElementById('modalTitulo').textContent = 'Nuevo Usuario';
+                document.getElementById('formUsuario').reset();
+                editandoId = null;
+                document.getElementById('password').required = true;
             }
-
-            // Mostrar nombre de usuario actual
-            const user = window.auth ? window.auth.getCurrentUser() : null;
-            const userNameDisplay = document.getElementById('userNameDisplay');
-            if (user && userNameDisplay) {
-                userNameDisplay.textContent = user.nombre || 'Administrador';
+        }
+        
+        function cerrarModal() {
+            document.getElementById('overlay').classList.remove('active');
+            document.getElementById('modalUsuario').classList.remove('active');
+        }
+        
+        function editarUsuario(id) {
+            const usuario = usuarios.find(u => u.id === id);
+            if (usuario) {
+                document.getElementById('modalTitulo').textContent = 'Editar Usuario';
+                document.getElementById('nombreUsuario').value = usuario.usuario;
+                document.getElementById('correoUsuario').value = usuario.correo;
+                document.getElementById('rolUsuario').value = usuario.rol;
+                document.getElementById('password').value = '';
+                document.getElementById('password').required = false;
+                editandoId = id;
+                abrirModal(true);
             }
+        }
+        
+        function eliminarUsuario(id) {
+            if (confirm('¿Eliminar este usuario?')) {
+                usuarios = usuarios.filter(u => u.id !== id);
+                mostrarUsuarios();
+                alert('Usuario eliminado');
+            }
+        }
+        
+        function guardarUsuario(e) {
+            e.preventDefault();
+            
+            const nombre = document.getElementById('nombreUsuario').value;
+            const correo = document.getElementById('correoUsuario').value;
+            const rol = document.getElementById('rolUsuario').value;
+            const password = document.getElementById('password').value;
+            
+            if (editandoId) {
+                // Editar
+                const index = usuarios.findIndex(u => u.id === editandoId);
+                usuarios[index] = {
+                    ...usuarios[index],
+                    usuario: nombre,
+                    correo: correo,
+                    rol: rol
+                };
+                if (password) {
+                    usuarios[index].password = password;
+                }
+                alert('Usuario actualizado');
+            } else {
+                // Nuevo
+                const nuevoId = usuarios.length > 0 ? Math.max(...usuarios.map(u => u.id)) + 1 : 1;
+                usuarios.push({
+                    id: nuevoId,
+                    usuario: nombre,
+                    correo: correo,
+                    rol: rol,
+                    password: password
+                });
+                alert('Usuario creado');
+            }
+            
+            cerrarModal();
+            mostrarUsuarios();
+        }
+        
+        // Eventos
+        document.getElementById('btnNuevo').addEventListener('click', () => abrirModal(false));
+        document.getElementById('btnCancelar').addEventListener('click', cerrarModal);
+        document.getElementById('overlay').addEventListener('click', cerrarModal);
+        document.getElementById('formUsuario').addEventListener('submit', guardarUsuario);
+        
+        // Inicializar
+        mostrarUsuarios();
+        
+        // Búsqueda
+        document.getElementById('btnSearch').addEventListener('click', () => {
+            const termino = document.getElementById('searchInput').value.toLowerCase();
+            const filtrados = usuarios.filter(u => 
+                u.usuario.toLowerCase().includes(termino) || 
+                u.correo.toLowerCase().includes(termino)
+            );
+            
+            const tbody = document.getElementById('usuariosBody');
+            tbody.innerHTML = '';
+            filtrados.forEach(usuario => {
+                const fila = document.createElement('tr');
+                const rolTexto = usuario.rol === 'admin' ? 'Administrador' : 
+                               usuario.rol === 'supervisor' ? 'Supervisor' : 'Vendedor';
+                fila.innerHTML = `
+                    <td>${usuario.id}</td>
+                    <td>${usuario.usuario}</td>
+                    <td>${usuario.correo}</td>
+                    <td>${rolTexto}</td>
+                    <td>
+                        <button class="btn-editar" onclick="editarUsuario(${usuario.id})">Editar</button>
+                        <button class="btn-eliminar" onclick="eliminarUsuario(${usuario.id})">Eliminar</button>
+                    </td>
+                `;
+                tbody.appendChild(fila);
+            });
         });
     </script>
-    <!-- Footer -->
-    <footer class="footer">
-        <div class="container">
-            <div class="footer-content">
-                <div class="footer-icon">🍓</div>
-                <p class="footer-title">FRESA CON CREMA - Tu Antojito</p>
-                <p class="footer-text">Delicias frescas todos los días</p>
-            </div>
-        </div>
-    </footer>
 </body>
-
 </html>
