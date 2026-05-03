@@ -1,140 +1,170 @@
 // usuarios.js - Gestión de usuarios con integración al sistema de autenticación
 
 document.addEventListener('DOMContentLoaded', function () {
-    // Clave para almacenar usuarios en localStorage
+    // ============================================
+    // CONFIGURACIÓN Y CONSTANTES
+    // ============================================
     const USUARIOS_KEY = 'fresa_usuarios';
 
-    // Función para obtener todos los usuarios (incluyendo los temporales del auth)
+    // ============================================
+    // FUNCIONES DE GESTIÓN DE USUARIOS
+    // ============================================
+
+    // Obtener todos los usuarios (incluyendo los del sistema de autenticación)
     function obtenerTodosLosUsuarios() {
-        // 1. Obtener usuarios del sistema de autenticación
         let usuariosAuth = [];
+
+        // 1. Intentar obtener del sistema de autenticación
         if (window.auth && typeof window.auth.getAllUsers === 'function') {
             usuariosAuth = window.auth.getAllUsers();
         } else {
-            // Fallback: intentar obtener directamente de localStorage
+            // 2. Fallback: leer directamente de localStorage
             try {
                 const usuariosGuardados = localStorage.getItem(USUARIOS_KEY);
                 if (usuariosGuardados) {
                     usuariosAuth = JSON.parse(usuariosGuardados);
+                } else {
+                    // 3. Usuario por defecto (admin)
+                    usuariosAuth = [{
+                        id: 1,
+                        usuario: "admin",
+                        correo: "admin@fresaconcrema.com",
+                        rol: "admin",
+                        password: "admin123",
+                        nombreCompleto: "Administrador",
+                        foto: "",
+                        fechaCreacion: new Date().toISOString().split('T')[0]
+                    }];
                 }
             } catch (error) {
                 console.error('Error al leer usuarios:', error);
             }
         }
 
-        // 2. Asegurar que los usuarios tengan el formato correcto
+        // 4. Asegurar formato consistente
         return usuariosAuth.map(user => ({
             id: user.id,
             usuario: user.usuario || user.username,
             correo: user.correo || user.email,
             rol: user.rol,
             password: user.password,
+            foto: user.foto || '',
             nombreCompleto: user.nombreCompleto || user.nombre || user.usuario,
             fechaCreacion: user.fechaCreacion || new Date().toISOString().split('T')[0]
         }));
     }
 
-    // Función para guardar usuarios en localStorage
+    // Guardar usuarios en localStorage
     function guardarUsuarios(usuarios) {
         try {
-            // Guardar en localStorage
             localStorage.setItem(USUARIOS_KEY, JSON.stringify(usuarios));
 
-            // También actualizar el sistema de autenticación si es posible
-            if (window.auth && window.auth.actualizarUsuarios) {
+            // Actualizar sistema de autenticación si está disponible
+            if (window.auth && typeof window.auth.actualizarUsuarios === 'function') {
                 window.auth.actualizarUsuarios(usuarios);
             }
         } catch (error) {
-            console.error('Error al guardar usuarios en localStorage:', error);
+            console.error('Error al guardar usuarios:', error);
         }
     }
 
-    // Cargar usuarios desde el sistema
-    let usuarios = obtenerTodosLosUsuarios();
-
-    // Variables de estado
-    let usuariosFiltrados = [...usuarios];
-    let currentPage = 1;
-    let recordsPerPage = 5;
-    let searchTerm = '';
-    let modoEdicion = false;
-    let usuarioEditandoId = null;
-
-    // Elementos del DOM
-    const usuariosBody = document.getElementById('usuarios-body');
-    const recordsInfo = document.getElementById('records-info');
-    const currentPageElement = document.getElementById('current-page');
-    const firstPageBtn = document.getElementById('first-page');
-    const prevPageBtn = document.getElementById('prev-page');
-    const nextPageBtn = document.getElementById('next-page');
-    const lastPageBtn = document.getElementById('last-page');
-    const searchInput = document.getElementById('search-input');
-    const recordsPerPageSelect = document.getElementById('records-per-page');
-    const btnSearch = document.querySelector('.btn-search');
-    const btnNuevo = document.getElementById('btn-nuevo');
-
-    // Elementos del formulario
-    const overlay = document.getElementById('overlay');
-    const formularioUsuario = document.getElementById('formulario-usuario');
-    const cerrarFormulario = document.getElementById('cerrar-formulario');
-    const cancelarFormulario = document.getElementById('cancelar-formulario');
-    const formNuevoUsuario = document.getElementById('form-nuevo-usuario');
-    const nombreUsuarioInput = document.getElementById('nombre-usuario');
-    const correoUsuarioInput = document.getElementById('correo-usuario');
-    const rolUsuarioSelect = document.getElementById('rol-usuario');
-    const passwordUsuarioInput = document.getElementById('password-usuario');
-    const confirmarPasswordInput = document.getElementById('confirmar-password');
-    const formularioTitulo = document.querySelector('.form-header h2');
-    const btnGuardar = document.querySelector('.btn-guardar');
-
-    // Verificar que los elementos críticos existan
-    if (!usuariosBody || !recordsPerPageSelect) {
-        console.error('Elementos críticos del DOM no encontrados');
-        return;
-    }
-
-    // Establecer recordsPerPage desde el select
-    if (recordsPerPageSelect) {
-        recordsPerPage = parseInt(recordsPerPageSelect.value);
-    }
-
-    // Función para recargar usuarios desde el sistema
+    // Recargar usuarios desde el sistema
     function recargarUsuarios() {
         usuarios = obtenerTodosLosUsuarios();
         buscarUsuarios();
     }
 
-    // Función para mostrar/ocultar contraseña en la tabla
-    function togglePasswordVisibility(element) {
-        const passwordSpan = element.querySelector('.password-text');
-        const eyeIcon = element.querySelector('.eye-icon');
+    // ============================================
+    // MANEJO DE FOTOS
+    // ============================================
 
-        if (!passwordSpan || !eyeIcon) return;
+    // Convertir archivo a Base64
+    function fileToBase64(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = error => reject(error);
+        });
+    }
 
-        if (passwordSpan.dataset.visible === 'true') {
-            // Ocultar contraseña
-            const passwordLength = passwordSpan.dataset.password.length;
-            passwordSpan.textContent = '•'.repeat(passwordLength);
-            passwordSpan.dataset.visible = 'false';
-            eyeIcon.className = 'eye-icon fas fa-eye';
-            eyeIcon.title = 'Mostrar contraseña';
+    // Actualizar previsualización de foto
+    function actualizarPreview(fotoUrl) {
+        if (!fotoPreview) return;
+
+        if (fotoUrl && fotoUrl.trim() !== '') {
+            fotoPreview.innerHTML = `<img src="${escapeHtml(fotoUrl)}" alt="Preview" style="width: 80px; height: 80px; object-fit: cover; border-radius: 50%;">`;
         } else {
-            // Mostrar contraseña
-            passwordSpan.textContent = passwordSpan.dataset.password;
-            passwordSpan.dataset.visible = 'true';
-            eyeIcon.className = 'eye-icon fas fa-eye-slash';
-            eyeIcon.title = 'Ocultar contraseña';
+            fotoPreview.innerHTML = '<i class="fas fa-user-circle fa-3x" style="color: #3a7bd5;"></i>';
         }
     }
 
-    // Función para mostrar formulario (nuevo o edición)
+    // Manejar selección de foto desde archivo
+    function manejarSeleccionFoto(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        // Validar tipo
+        if (!file.type.startsWith('image/')) {
+            mostrarError('foto', 'Por favor selecciona una imagen válida');
+            return;
+        }
+
+        // Validar tamaño (max 2MB)
+        if (file.size > 2 * 1024 * 1024) {
+            mostrarError('foto', 'La imagen no debe superar los 2MB');
+            return;
+        }
+
+        // Convertir a Base64
+        fileToBase64(file)
+            .then(base64 => {
+                fotoDataURL = base64;
+                actualizarPreview(fotoDataURL);
+                if (fotoUrlInput) fotoUrlInput.value = '';
+                ocultarError('foto');
+            })
+            .catch(error => {
+                console.error('Error al convertir imagen:', error);
+                mostrarError('foto', 'Error al procesar la imagen');
+            });
+    }
+
+    // Manejar URL de foto externa
+    function manejarUrlFoto() {
+        if (!fotoUrlInput) return;
+
+        const url = fotoUrlInput.value.trim();
+        if (url) {
+            fotoDataURL = url;
+            actualizarPreview(url);
+            if (fotoUsuarioInput) fotoUsuarioInput.value = '';
+            if (btnRemoverFoto) btnRemoverFoto.style.display = 'inline-flex';
+            ocultarError('foto');
+        }
+    }
+
+    // Remover foto actual
+    function removerFoto() {
+        fotoDataURL = '';
+        actualizarPreview('');
+        if (fotoUsuarioInput) fotoUsuarioInput.value = '';
+        if (fotoUrlInput) fotoUrlInput.value = '';
+        if (btnRemoverFoto) btnRemoverFoto.style.display = 'none';
+    }
+
+    // ============================================
+    // MANEJO DEL FORMULARIO (MODAL)
+    // ============================================
+
+    // Mostrar formulario (nuevo o edición)
     function mostrarFormulario(usuario = null) {
         if (!overlay || !formularioUsuario) return;
 
-        // Verificar permisos para editar/crear usuarios
+        // Verificar permisos
         const currentUser = window.auth ? window.auth.getCurrentUser() : null;
         if (currentUser && currentUser.rol !== 'admin') {
-            mostrarMensajeExito('No tienes permisos para realizar esta acción', 'error');
+            mostrarMensaje('No tienes permisos para realizar esta acción', 'error');
             return;
         }
 
@@ -142,62 +172,90 @@ document.addEventListener('DOMContentLoaded', function () {
         formularioUsuario.classList.add('active');
         document.body.style.overflow = 'hidden';
 
+        // Reiniciar foto
+        fotoDataURL = '';
+
         if (usuario) {
-            // Modo edición
+            // MODO EDICIÓN
             modoEdicion = true;
             usuarioEditandoId = usuario.id;
-            if (formularioTitulo) formularioTitulo.innerHTML = '<i class="fas fa-user-edit"></i> Editar Usuario';
-            if (btnGuardar) btnGuardar.innerHTML = '<i class="fas fa-save"></i> Actualizar Usuario';
 
-            // Rellenar formulario con datos del usuario
-            nombreUsuarioInput.value = usuario.usuario;
-            correoUsuarioInput.value = usuario.correo;
-            rolUsuarioSelect.value = usuario.rol;
+            formularioTitulo.innerHTML = '<i class="fas fa-user-edit"></i> Editar Usuario';
+            btnGuardar.innerHTML = '<i class="fas fa-save"></i> Actualizar Usuario';
 
-            // No mostrar la contraseña actual por seguridad
-            passwordUsuarioInput.value = '';
-            confirmarPasswordInput.value = '';
+            // Rellenar formulario
+            if (nombreUsuarioInput) nombreUsuarioInput.value = usuario.usuario || '';
+            if (correoUsuarioInput) correoUsuarioInput.value = usuario.correo || '';
+            if (rolUsuarioSelect) rolUsuarioSelect.value = usuario.rol || '';
 
-            // Cambiar placeholder para indicar que es opcional en edición
-            passwordUsuarioInput.placeholder = 'Dejar en blanco para mantener la actual';
-            confirmarPasswordInput.placeholder = 'Dejar en blanco para mantener la actual';
+            // Manejar foto
+            if (usuario.foto) {
+                fotoDataURL = usuario.foto;
+                actualizarPreview(usuario.foto);
+                if (btnRemoverFoto) btnRemoverFoto.style.display = 'inline-flex';
+            } else {
+                actualizarPreview('');
+                if (btnRemoverFoto) btnRemoverFoto.style.display = 'none';
+            }
 
-            // Quitar required en modo edición
-            passwordUsuarioInput.removeAttribute('required');
-            confirmarPasswordInput.removeAttribute('required');
+            if (fotoUrlInput) fotoUrlInput.value = '';
+            if (fotoUsuarioInput) fotoUsuarioInput.value = '';
+
+            // Contraseña: no requerida en edición
+            if (passwordUsuarioInput) {
+                passwordUsuarioInput.value = '';
+                passwordUsuarioInput.placeholder = 'Dejar en blanco para mantener la actual';
+                passwordUsuarioInput.removeAttribute('required');
+            }
+            if (confirmarPasswordInput) {
+                confirmarPasswordInput.value = '';
+                confirmarPasswordInput.placeholder = 'Dejar en blanco para mantener la actual';
+                confirmarPasswordInput.removeAttribute('required');
+            }
         } else {
-            // Modo nuevo
+            // MODO NUEVO USUARIO
             modoEdicion = false;
             usuarioEditandoId = null;
-            if (formularioTitulo) formularioTitulo.innerHTML = '<i class="fas fa-user-plus"></i> Nuevo Usuario';
-            if (btnGuardar) btnGuardar.innerHTML = '<i class="fas fa-save"></i> Guardar Usuario';
 
-            // Restaurar placeholder original
-            passwordUsuarioInput.placeholder = 'Mínimo 6 caracteres';
-            confirmarPasswordInput.placeholder = 'Repita la contraseña';
+            formularioTitulo.innerHTML = '<i class="fas fa-user-plus"></i> Nuevo Usuario';
+            btnGuardar.innerHTML = '<i class="fas fa-save"></i> Guardar Usuario';
 
-            // Agregar required en modo nuevo
-            passwordUsuarioInput.setAttribute('required', 'required');
-            confirmarPasswordInput.setAttribute('required', 'required');
+            // Limpiar formulario
+            if (formNuevoUsuario) formNuevoUsuario.reset();
 
-            limpiarFormulario();
+            fotoDataURL = '';
+            actualizarPreview('');
+            if (fotoUrlInput) fotoUrlInput.value = '';
+            if (fotoUsuarioInput) fotoUsuarioInput.value = '';
+            if (btnRemoverFoto) btnRemoverFoto.style.display = 'none';
+
+            // Contraseña: requerida en nuevo usuario
+            if (passwordUsuarioInput) {
+                passwordUsuarioInput.placeholder = 'Mínimo 6 caracteres';
+                passwordUsuarioInput.setAttribute('required', 'required');
+            }
+            if (confirmarPasswordInput) {
+                confirmarPasswordInput.placeholder = 'Repita la contraseña';
+                confirmarPasswordInput.setAttribute('required', 'required');
+            }
         }
 
-        // Remover mensajes de error
         ocultarTodosLosErrores();
     }
 
+    // Ocultar formulario
     function ocultarFormulario() {
         if (!overlay || !formularioUsuario) return;
 
         overlay.classList.remove('active');
         formularioUsuario.classList.remove('active');
         document.body.style.overflow = 'auto';
-        limpiarFormulario();
+
         modoEdicion = false;
         usuarioEditandoId = null;
+        fotoDataURL = null;
 
-        // Restaurar atributos originales
+        // Restaurar atributos de contraseña
         if (passwordUsuarioInput) {
             passwordUsuarioInput.setAttribute('required', 'required');
             passwordUsuarioInput.placeholder = 'Mínimo 6 caracteres';
@@ -208,26 +266,23 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    // Función para limpiar el formulario
-    function limpiarFormulario() {
-        if (formNuevoUsuario) formNuevoUsuario.reset();
-        ocultarTodosLosErrores();
-        if (nombreUsuarioInput) nombreUsuarioInput.style.borderColor = '#ddd';
-        if (correoUsuarioInput) correoUsuarioInput.style.borderColor = '#ddd';
-        if (rolUsuarioSelect) rolUsuarioSelect.style.borderColor = '#ddd';
-        if (passwordUsuarioInput) passwordUsuarioInput.style.borderColor = '#ddd';
-        if (confirmarPasswordInput) confirmarPasswordInput.style.borderColor = '#ddd';
+    // ============================================
+    // VALIDACIÓN DEL FORMULARIO
+    // ============================================
+
+    function ocultarError(campoId) {
+        const errorElement = document.getElementById(`error-${campoId}`);
+        if (errorElement) {
+            errorElement.classList.remove('show');
+            errorElement.textContent = '';
+        }
+
+        const inputElement = document.getElementById(`${campoId}-usuario`);
+        if (inputElement) {
+            inputElement.style.borderColor = '';
+        }
     }
 
-    // Función para ocultar todos los mensajes de error
-    function ocultarTodosLosErrores() {
-        document.querySelectorAll('.error-message').forEach(error => {
-            error.classList.remove('show');
-            error.textContent = '';
-        });
-    }
-
-    // Función para mostrar error en un campo específico
     function mostrarError(campoId, mensaje) {
         const errorElement = document.getElementById(`error-${campoId}`);
         if (errorElement) {
@@ -235,20 +290,29 @@ document.addEventListener('DOMContentLoaded', function () {
             errorElement.classList.add('show');
         }
 
-        // Resaltar el campo con error
         const inputElement = document.getElementById(`${campoId}-usuario`);
         if (inputElement) {
             inputElement.style.borderColor = '#dc3545';
-            inputElement.focus();
         }
     }
 
-    // Función para validar el formulario
+    function ocultarTodosLosErrores() {
+        document.querySelectorAll('.error-message').forEach(error => {
+            error.classList.remove('show');
+            error.textContent = '';
+        });
+
+        document.querySelectorAll('.form-group input, .form-group select').forEach(input => {
+            input.style.borderColor = '';
+        });
+    }
+
+    // Validar formulario completo
     function validarFormulario() {
         let isValid = true;
         ocultarTodosLosErrores();
 
-        // Validar nombre de usuario
+        // 1. Validar nombre de usuario
         const nombre = nombreUsuarioInput ? nombreUsuarioInput.value.trim() : '';
         if (!nombre) {
             mostrarError('nombre', 'El nombre de usuario es requerido');
@@ -256,51 +320,51 @@ document.addEventListener('DOMContentLoaded', function () {
         } else if (nombre.length < 3) {
             mostrarError('nombre', 'El nombre debe tener al menos 3 caracteres');
             isValid = false;
-        } else if (modoEdicion) {
-            if (usuarios.some(u => u.id !== usuarioEditandoId && u.usuario.toLowerCase() === nombre.toLowerCase())) {
-                mostrarError('nombre', 'Este nombre de usuario ya existe');
-                isValid = false;
-            }
         } else {
-            if (usuarios.some(u => u.usuario.toLowerCase() === nombre.toLowerCase())) {
+            const existeUsuario = usuarios.some(u =>
+                u.id !== usuarioEditandoId &&
+                u.usuario.toLowerCase() === nombre.toLowerCase()
+            );
+            if (existeUsuario) {
                 mostrarError('nombre', 'Este nombre de usuario ya existe');
                 isValid = false;
             }
         }
 
-        // Validar correo electrónico
+        // 2. Validar correo electrónico
         const correo = correoUsuarioInput ? correoUsuarioInput.value.trim() : '';
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
         if (!correo) {
             mostrarError('correo', 'El correo electrónico es requerido');
             isValid = false;
         } else if (!emailRegex.test(correo)) {
             mostrarError('correo', 'Ingrese un correo electrónico válido');
             isValid = false;
-        } else if (modoEdicion) {
-            if (usuarios.some(u => u.id !== usuarioEditandoId && u.correo.toLowerCase() === correo.toLowerCase())) {
-                mostrarError('correo', 'Este correo electrónico ya está registrado');
-                isValid = false;
-            }
         } else {
-            if (usuarios.some(u => u.correo.toLowerCase() === correo.toLowerCase())) {
-                mostrarError('correo', 'Este correo electrónico ya está registrado');
+            const existeCorreo = usuarios.some(u =>
+                u.id !== usuarioEditandoId &&
+                u.correo.toLowerCase() === correo.toLowerCase()
+            );
+            if (existeCorreo) {
+                mostrarError('correo', 'Este correo ya está registrado');
                 isValid = false;
             }
         }
 
-        // Validar rol
+        // 3. Validar rol
         const rol = rolUsuarioSelect ? rolUsuarioSelect.value : '';
         if (!rol) {
             mostrarError('rol', 'Seleccione un rol para el usuario');
             isValid = false;
         }
 
-        // Validar contraseña
+        // 4. Validar contraseña
         const password = passwordUsuarioInput ? passwordUsuarioInput.value : '';
         const confirmarPassword = confirmarPasswordInput ? confirmarPasswordInput.value : '';
 
         if (modoEdicion) {
+            // En edición: solo validar si se ingresó nueva contraseña
             if (password || confirmarPassword) {
                 if (password.length < 6) {
                     mostrarError('password', 'La contraseña debe tener al menos 6 caracteres');
@@ -311,6 +375,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
             }
         } else {
+            // En nuevo usuario: contraseña es obligatoria
             if (!password) {
                 mostrarError('password', 'La contraseña es requerida');
                 isValid = false;
@@ -329,16 +394,18 @@ document.addEventListener('DOMContentLoaded', function () {
         return isValid;
     }
 
-    // Función para guardar usuario
+    // ============================================
+    // CRUD: CREAR, LEER, ACTUALIZAR, ELIMINAR
+    // ============================================
+
+    // Guardar usuario (crear o actualizar)
     function guardarUsuario(event) {
         event.preventDefault();
 
-        if (!validarFormulario()) {
-            return;
-        }
+        if (!validarFormulario()) return;
 
         if (modoEdicion) {
-            // Actualizar usuario existente
+            // ACTUALIZAR USUARIO EXISTENTE
             const usuarioIndex = usuarios.findIndex(u => u.id === usuarioEditandoId);
             if (usuarioIndex !== -1) {
                 const usuarioActualizado = { ...usuarios[usuarioIndex] };
@@ -347,7 +414,11 @@ document.addEventListener('DOMContentLoaded', function () {
                 usuarioActualizado.correo = correoUsuarioInput.value.trim();
                 usuarioActualizado.rol = rolUsuarioSelect.value;
 
-                const nuevaPassword = passwordUsuarioInput.value;
+                if (fotoDataURL) {
+                    usuarioActualizado.foto = fotoDataURL;
+                }
+
+                const nuevaPassword = passwordUsuarioInput ? passwordUsuarioInput.value : '';
                 if (nuevaPassword && nuevaPassword.length >= 6) {
                     usuarioActualizado.password = nuevaPassword;
                 }
@@ -355,11 +426,11 @@ document.addEventListener('DOMContentLoaded', function () {
                 usuarios[usuarioIndex] = usuarioActualizado;
                 guardarUsuarios(usuarios);
                 buscarUsuarios();
-                mostrarMensajeExito('Usuario actualizado exitosamente');
+                mostrarMensaje('Usuario actualizado exitosamente', 'success');
                 ocultarFormulario();
             }
         } else {
-            // Crear nuevo usuario
+            // CREAR NUEVO USUARIO
             const nuevoId = usuarios.length > 0 ? Math.max(...usuarios.map(u => u.id)) + 1 : 1;
 
             const nuevoUsuario = {
@@ -368,6 +439,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 correo: correoUsuarioInput.value.trim(),
                 rol: rolUsuarioSelect.value,
                 password: passwordUsuarioInput.value,
+                foto: fotoDataURL || '',
                 nombreCompleto: nombreUsuarioInput.value.trim(),
                 fechaCreacion: new Date().toISOString().split('T')[0]
             };
@@ -375,22 +447,259 @@ document.addEventListener('DOMContentLoaded', function () {
             usuarios.push(nuevoUsuario);
             guardarUsuarios(usuarios);
             buscarUsuarios();
-            mostrarMensajeExito('Usuario creado exitosamente');
+            mostrarMensaje('Usuario creado exitosamente', 'success');
             ocultarFormulario();
         }
     }
 
-    // Función para mostrar mensaje de éxito o error
-    function mostrarMensajeExito(mensaje, tipo = 'success') {
+    // Eliminar usuario
+    function eliminarUsuario(id) {
+        const currentUser = window.auth ? window.auth.getCurrentUser() : null;
+
+        // Verificar permisos
+        if (currentUser && currentUser.rol !== 'admin') {
+            mostrarMensaje('No tienes permisos para eliminar usuarios', 'error');
+            return;
+        }
+
+        const usuarioAEliminar = usuarios.find(u => u.id === id);
+        if (!usuarioAEliminar) return;
+
+        // No permitir eliminar el propio usuario
+        if (currentUser && currentUser.id === id) {
+            mostrarMensaje('No puedes eliminar tu propio usuario', 'error');
+            return;
+        }
+
+        // Verificar que no sea el último administrador
+        const adminsRestantes = usuarios.filter(u => u.rol === 'admin' && u.id !== id).length;
+        if (usuarioAEliminar.rol === 'admin' && adminsRestantes === 0) {
+            mostrarMensaje('No puedes eliminar el único administrador', 'error');
+            return;
+        }
+
+        if (confirm(`¿Eliminar al usuario "${usuarioAEliminar.usuario}"?`)) {
+            const index = usuarios.findIndex(u => u.id === id);
+            if (index !== -1) {
+                usuarios.splice(index, 1);
+                guardarUsuarios(usuarios);
+                buscarUsuarios();
+                mostrarMensaje(`Usuario "${usuarioAEliminar.usuario}" eliminado`);
+            }
+        }
+    }
+
+    // Editar usuario (cargar en formulario)
+    function editarUsuario(id) {
+        const usuario = usuarios.find(u => u.id === id);
+        if (usuario) {
+            mostrarFormulario(usuario);
+        }
+    }
+
+    // ============================================
+    // MANEJO DE CONTRASEÑA VISIBLE
+    // ============================================
+
+    function togglePasswordVisibility(element) {
+        const passwordSpan = element.querySelector('.password-text');
+        const eyeIcon = element.querySelector('.eye-icon');
+
+        if (!passwordSpan || !eyeIcon) return;
+
+        if (passwordSpan.dataset.visible === 'true') {
+            // Ocultar
+            const passwordLength = passwordSpan.dataset.password.length;
+            passwordSpan.textContent = '•'.repeat(passwordLength);
+            passwordSpan.dataset.visible = 'false';
+            eyeIcon.className = 'eye-icon fas fa-eye';
+            eyeIcon.title = 'Mostrar contraseña';
+        } else {
+            // Mostrar
+            passwordSpan.textContent = passwordSpan.dataset.password;
+            passwordSpan.dataset.visible = 'true';
+            eyeIcon.className = 'eye-icon fas fa-eye-slash';
+            eyeIcon.title = 'Ocultar contraseña';
+        }
+    }
+
+    // ============================================
+    // RENDERIZADO DE TABLA Y PAGINACIÓN
+    // ============================================
+
+    function renderTable() {
+        if (!usuariosBody) return;
+
+        const currentUser = window.auth ? window.auth.getCurrentUser() : null;
+        const esAdmin = currentUser && currentUser.rol === 'admin';
+
+        usuariosBody.innerHTML = '';
+
+        const totalPages = Math.ceil(usuariosFiltrados.length / recordsPerPage);
+        const startIndex = (currentPage - 1) * recordsPerPage;
+        const endIndex = Math.min(startIndex + recordsPerPage, usuariosFiltrados.length);
+        const usuariosPagina = usuariosFiltrados.slice(startIndex, endIndex);
+
+        if (usuariosPagina.length === 0) {
+            usuariosBody.innerHTML = '<tr><td colspan="7" style="text-align: center;">No hay usuarios registrados</td></tr>';
+            updatePaginationInfo();
+            updatePaginationControls(totalPages);
+            return;
+        }
+
+        usuariosPagina.forEach(usuario => {
+            const row = document.createElement('tr');
+
+            // Clase y texto del rol
+            const rolClass = usuario.rol === 'admin' ? 'rol-admin' : 'rol-usuario';
+            let rolTexto = {
+                'admin': 'Administrador',
+                'vendedor': 'Vendedor',
+                'supervisor': 'Supervisor'
+            }[usuario.rol] || 'Vendedor';
+
+            const fechaTexto = usuario.fechaCreacion ?
+                `<div class="fecha-creacion">${escapeHtml(usuario.fechaCreacion)}</div>` : '';
+
+            // Contraseña enmascarada
+            const passwordLength = usuario.password ? usuario.password.length : 0;
+            const passwordDots = '•'.repeat(passwordLength);
+
+            // Foto
+            const fotoHtml = usuario.foto && usuario.foto.trim() !== '' ?
+                `<img src="${escapeHtml(usuario.foto)}" alt="Foto" style="width: 50px; height: 50px; object-fit: cover; border-radius: 50%;">` :
+                `<i class="fas fa-user-circle fa-2x" style="color: #3a7bd5;"></i>`;
+
+            // Construir celdas
+            const cellId = document.createElement('td');
+            cellId.textContent = usuario.id;
+
+            const cellUsuario = document.createElement('td');
+            cellUsuario.innerHTML = `
+            <div class="usuario-info">
+                <strong>${escapeHtml(usuario.usuario)}</strong>
+                ${fechaTexto}
+            </div>
+        `;
+
+            const cellCorreo = document.createElement('td');
+            cellCorreo.textContent = usuario.correo;
+
+            const cellRol = document.createElement('td');
+            cellRol.innerHTML = `<span class="${rolClass}">${rolTexto}</span>`;
+
+            const cellPassword = document.createElement('td');
+            cellPassword.innerHTML = `
+            <div class="password-display" style="cursor: pointer;">
+                <span class="password-text" 
+                      data-password="${escapeHtml(usuario.password)}" 
+                      data-visible="false">
+                    ${passwordDots}
+                </span>
+                <i class="eye-icon fas fa-eye" title="Mostrar contraseña"></i>
+            </div>
+        `;
+
+            const cellFoto = document.createElement('td');
+            cellFoto.innerHTML = `<div class="foto-tabla-container">${fotoHtml}</div>`;
+
+            const cellAcciones = document.createElement('td');
+            if (esAdmin) {
+                cellAcciones.className = 'acciones';
+                cellAcciones.innerHTML = `
+                <button class="btn-editar" data-id="${usuario.id}">
+                    <i class="fas fa-edit"></i> Editar
+                </button>
+                <button class="btn-eliminar" data-id="${usuario.id}">
+                    <i class="fas fa-trash"></i> Eliminar
+                </button>
+            `;
+            } else {
+                cellAcciones.textContent = '-';
+                cellAcciones.className = 'acciones';
+            }
+
+            row.appendChild(cellId);
+            row.appendChild(cellUsuario);
+            row.appendChild(cellCorreo);
+            row.appendChild(cellRol);
+            row.appendChild(cellPassword);
+            row.appendChild(cellFoto);
+            row.appendChild(cellAcciones);
+
+            usuariosBody.appendChild(row);
+        });
+
+        updatePaginationInfo();
+        updatePaginationControls(totalPages);
+    }
+
+    function updatePaginationInfo() {
+        if (!recordsInfo) return;
+
+        const total = usuariosFiltrados.length;
+        const start = total === 0 ? 0 : (currentPage - 1) * recordsPerPage + 1;
+        const end = Math.min(start + recordsPerPage - 1, total);
+
+        recordsInfo.textContent = total === 0
+            ? 'Mostrando 0 a 0 de 0 registros'
+            : `Mostrando ${start} a ${end} de ${total} registros`;
+
+        if (currentPageElement) {
+            currentPageElement.textContent = currentPage;
+        }
+    }
+
+    function updatePaginationControls(totalPages) {
+        const noResults = totalPages === 0;
+
+        if (firstPageBtn) firstPageBtn.disabled = currentPage === 1 || noResults;
+        if (prevPageBtn) prevPageBtn.disabled = currentPage === 1 || noResults;
+        if (nextPageBtn) nextPageBtn.disabled = currentPage === totalPages || noResults;
+        if (lastPageBtn) lastPageBtn.disabled = currentPage === totalPages || noResults;
+    }
+
+    function goToPage(page) {
+        const totalPages = Math.ceil(usuariosFiltrados.length / recordsPerPage);
+        if (totalPages === 0) return;
+
+        page = Math.max(1, Math.min(page, totalPages));
+        currentPage = page;
+        renderTable();
+    }
+
+    function buscarUsuarios() {
+        searchTerm = searchInput ? searchInput.value.toLowerCase().trim() : '';
+
+        if (searchTerm === '') {
+            usuariosFiltrados = [...usuarios];
+        } else {
+            usuariosFiltrados = usuarios.filter(usuario =>
+                usuario.usuario.toLowerCase().includes(searchTerm) ||
+                usuario.correo.toLowerCase().includes(searchTerm) ||
+                usuario.rol.toLowerCase().includes(searchTerm) ||
+                usuario.id.toString().includes(searchTerm)
+            );
+        }
+
+        currentPage = 1;
+        renderTable();
+    }
+
+    // ============================================
+    // MENSAJES NOTIFICACIÓN
+    // ============================================
+
+    function mostrarMensaje(mensaje, tipo = 'success') {
         const mensajeElement = document.createElement('div');
         mensajeElement.className = 'mensaje-exito';
 
         const icono = tipo === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle';
-        const color = tipo === 'success' ? 'linear-gradient(to right, #4CAF50, #45a049)' : 'linear-gradient(to right, #dc3545, #c82333)';
+        const color = tipo === 'success' ? '#4CAF50' : '#dc3545';
 
         mensajeElement.innerHTML = `
             <i class="fas ${icono}"></i>
-            <span>${mensaje}</span>
+            <span>${escapeHtml(mensaje)}</span>
         `;
 
         mensajeElement.style.cssText = `
@@ -422,86 +731,10 @@ document.addEventListener('DOMContentLoaded', function () {
         }, 3000);
     }
 
-    // Función para renderizar la tabla
+    // ============================================
+    // UTILIDADES
+    // ============================================
 
-    function renderTable() {
-        if (!usuariosBody) return;
-
-        // Obtener usuario actual para verificar permisos
-        const currentUser = window.auth ? window.auth.getCurrentUser() : null;
-        const esAdmin = currentUser && currentUser.rol === 'admin';
-
-        usuariosBody.innerHTML = '';
-
-        const totalPages = Math.ceil(usuariosFiltrados.length / recordsPerPage);
-        const startIndex = (currentPage - 1) * recordsPerPage;
-        const endIndex = Math.min(startIndex + recordsPerPage, usuariosFiltrados.length);
-        const usuariosPagina = usuariosFiltrados.slice(startIndex, endIndex);
-
-        if (usuariosPagina.length === 0) {
-            usuariosBody.innerHTML = '<tr><td colspan="6" style="text-align: center;">No hay usuarios registrados</td></tr>';
-            updatePaginationInfo();
-            updatePaginationControls(totalPages);
-            return;
-        }
-
-        usuariosPagina.forEach(usuario => {
-            const row = document.createElement('tr');
-
-            let rolClass = usuario.rol === 'admin' ? 'rol-admin' : 'rol-usuario';
-            let rolTexto = usuario.rol === 'admin' ? 'Administrador' :
-                (usuario.rol === 'vendedor' ? 'Vendedor' :
-                    (usuario.rol === 'supervisor' ? 'Supervisor' : 'Vendedor 1'));
-
-            const fechaTexto = usuario.fechaCreacion ?
-                `<div class="fecha-creacion">${usuario.fechaCreacion}</div>` : '';
-
-            const passwordLength = usuario.password ? usuario.password.length : 0;
-            const passwordDots = '•'.repeat(passwordLength);
-
-            // Solo mostrar acciones si es administrador
-            const accionesHtml = esAdmin ? `
-            <td class="acciones">
-                <button class="btn-editar" data-id="${usuario.id}">
-                    <i class="fas fa-edit"></i> Editar
-                </button>
-                <button class="btn-eliminar" data-id="${usuario.id}">
-                    <i class="fas fa-trash"></i> Eliminar
-                </button>
-            </td>
-        ` : '<td class="acciones">-</td>';
-
-            row.innerHTML = `
-            <td>${usuario.id}</td>
-            <td>
-                <div class="usuario-info">
-                    <strong>${escapeHtml(usuario.usuario)}</strong>
-                    ${fechaTexto}
-                </div>
-            </td>
-            <td>${escapeHtml(usuario.correo)}</td>
-            <td><span class="${rolClass}">${rolTexto}</span></td>
-            <td>
-                <div class="password-display" style="cursor: pointer;">
-                    <span class="password-text" 
-                          data-password="${escapeHtml(usuario.password)}" 
-                          data-visible="false">
-                        ${passwordDots}
-                    </span>
-                    <i class="eye-icon fas fa-eye" title="Mostrar contraseña"></i>
-                </div>
-            </td>
-            ${accionesHtml}
-        `;
-
-            usuariosBody.appendChild(row);
-        });
-
-        updatePaginationInfo();
-        updatePaginationControls(totalPages);
-    }
-
-    // Función para escapar HTML
     function escapeHtml(str) {
         if (!str) return '';
         return str
@@ -512,9 +745,94 @@ document.addEventListener('DOMContentLoaded', function () {
             .replace(/'/g, '&#39;');
     }
 
-    // Event delegation para contraseñas
+    // ============================================
+    // INICIALIZACIÓN Y EVENTOS
+    // ============================================
+
+    // Variables de estado
+    let usuarios = obtenerTodosLosUsuarios();
+    let usuariosFiltrados = [...usuarios];
+    let currentPage = 1;
+    let recordsPerPage = 5;
+    let searchTerm = '';
+    let modoEdicion = false;
+    let usuarioEditandoId = null;
+    let fotoDataURL = null;
+
+    // Elementos del DOM
+    const usuariosBody = document.getElementById('usuarios-body');
+    const recordsInfo = document.getElementById('records-info');
+    const currentPageElement = document.getElementById('current-page');
+    const firstPageBtn = document.getElementById('first-page');
+    const prevPageBtn = document.getElementById('prev-page');
+    const nextPageBtn = document.getElementById('next-page');
+    const lastPageBtn = document.getElementById('last-page');
+    const searchInput = document.getElementById('search-input');
+    const recordsPerPageSelect = document.getElementById('records-per-page');
+    const btnSearch = document.querySelector('.btn-search');
+    const btnNuevo = document.getElementById('btn-nuevo');
+
+    // Elementos del formulario
+    const overlay = document.getElementById('overlay');
+    const formularioUsuario = document.getElementById('formulario-usuario');
+    const cerrarFormulario = document.getElementById('cerrar-formulario');
+    const cancelarFormulario = document.getElementById('cancelar-formulario');
+    const formNuevoUsuario = document.getElementById('form-nuevo-usuario');
+    const nombreUsuarioInput = document.getElementById('nombre-usuario');
+    const correoUsuarioInput = document.getElementById('correo-usuario');
+    const rolUsuarioSelect = document.getElementById('rol-usuario');
+    const passwordUsuarioInput = document.getElementById('password-usuario');
+    const confirmarPasswordInput = document.getElementById('confirmar-password');
+    const formularioTitulo = document.querySelector('.form-header h2');
+    const btnGuardar = document.querySelector('.btn-guardar');
+
+    // Elementos de foto
+    const fotoUsuarioInput = document.getElementById('foto-usuario');
+    const btnSubirFoto = document.getElementById('btn-subir-foto');
+    const btnRemoverFoto = document.getElementById('btn-remover-foto');
+    const fotoPreview = document.getElementById('fotoPreview');
+    const fotoUrlInput = document.getElementById('foto-url');
+
+    // Validar elementos críticos
+    if (!usuariosBody) {
+        console.error('Elemento usuarios-body no encontrado');
+        return;
+    }
+
+    // Configurar registros por página
+    if (recordsPerPageSelect) {
+        recordsPerPage = parseInt(recordsPerPageSelect.value);
+    }
+
+    // ============================================
+    // REGISTRO DE EVENTOS
+    // ============================================
+
+    // Formulario - Abrir/Cerrar
+    if (btnNuevo) btnNuevo.addEventListener('click', () => mostrarFormulario());
+    if (cerrarFormulario) cerrarFormulario.addEventListener('click', ocultarFormulario);
+    if (cancelarFormulario) cancelarFormulario.addEventListener('click', ocultarFormulario);
+    if (overlay) overlay.addEventListener('click', ocultarFormulario);
+    if (formularioUsuario) formularioUsuario.addEventListener('click', e => e.stopPropagation());
+    if (formNuevoUsuario) formNuevoUsuario.addEventListener('submit', guardarUsuario);
+
+    // Eventos de foto
+    if (btnSubirFoto) btnSubirFoto.addEventListener('click', () => fotoUsuarioInput?.click());
+    if (fotoUsuarioInput) fotoUsuarioInput.addEventListener('change', manejarSeleccionFoto);
+    if (btnRemoverFoto) btnRemoverFoto.addEventListener('click', removerFoto);
+    if (fotoUrlInput) {
+        fotoUrlInput.addEventListener('blur', manejarUrlFoto);
+        fotoUrlInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                manejarUrlFoto();
+            }
+        });
+    }
+
+    // Contraseña - toggle visibility (delegación de eventos)
     if (usuariosBody) {
-        usuariosBody.addEventListener('click', function (event) {
+        usuariosBody.addEventListener('click', (event) => {
             const passwordDisplay = event.target.closest('.password-display');
             if (passwordDisplay) {
                 event.stopPropagation();
@@ -523,130 +841,15 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    function updatePaginationInfo() {
-        if (!recordsInfo) return;
-
-        const totalUsuarios = usuariosFiltrados.length;
-        const startIndex = (currentPage - 1) * recordsPerPage + 1;
-        const endIndex = Math.min(startIndex + recordsPerPage - 1, totalUsuarios);
-
-        if (totalUsuarios === 0) {
-            recordsInfo.textContent = 'Mostrando 0 a 0 de 0 registros';
-        } else {
-            recordsInfo.textContent = `Mostrando ${startIndex} a ${endIndex} de ${totalUsuarios} registros`;
-        }
-
-        if (currentPageElement) {
-            currentPageElement.textContent = currentPage;
-        }
-    }
-
-    function updatePaginationControls(totalPages) {
-        if (firstPageBtn) firstPageBtn.disabled = currentPage === 1 || totalPages === 0;
-        if (prevPageBtn) prevPageBtn.disabled = currentPage === 1 || totalPages === 0;
-        if (nextPageBtn) nextPageBtn.disabled = currentPage === totalPages || totalPages === 0;
-        if (lastPageBtn) lastPageBtn.disabled = currentPage === totalPages || totalPages === 0;
-    }
-
-    function buscarUsuarios() {
-        searchTerm = searchInput ? searchInput.value.toLowerCase().trim() : '';
-
-        if (searchTerm === '') {
-            usuariosFiltrados = [...usuarios];
-        } else {
-            usuariosFiltrados = usuarios.filter(usuario =>
-                usuario.usuario.toLowerCase().includes(searchTerm) ||
-                usuario.correo.toLowerCase().includes(searchTerm) ||
-                usuario.rol.toLowerCase().includes(searchTerm) ||
-                usuario.id.toString().includes(searchTerm)
-            );
-        }
-
-        currentPage = 1;
-        renderTable();
-    }
-
-    function goToPage(page) {
-        const totalPages = Math.ceil(usuariosFiltrados.length / recordsPerPage);
-        if (totalPages === 0) return;
-
-        if (page < 1) page = 1;
-        if (page > totalPages) page = totalPages;
-
-        currentPage = page;
-        renderTable();
-    }
-
-    function eliminarUsuario(id) {
-        // Verificar permisos
-        const currentUser = window.auth ? window.auth.getCurrentUser() : null;
-        if (currentUser && currentUser.rol !== 'admin') {
-            mostrarMensajeExito('No tienes permisos para eliminar usuarios', 'error');
-            return;
-        }
-
-        const usuarioAEliminar = usuarios.find(u => u.id === id);
-
-        if (!usuarioAEliminar) return;
-
-        // No permitir eliminar el propio usuario
-        if (currentUser && currentUser.id === id) {
-            mostrarMensajeExito('No puedes eliminar tu propio usuario', 'error');
-            return;
-        }
-
-        const adminsRestantes = usuarios.filter(u => u.rol === 'admin' && u.id !== id).length;
-
-        if (usuarioAEliminar.rol === 'admin' && adminsRestantes === 0) {
-            mostrarMensajeExito('No puedes eliminar el único usuario administrador', 'error');
-            return;
-        }
-
-        if (confirm(`¿Estás seguro de que deseas eliminar al usuario "${usuarioAEliminar.usuario}"?`)) {
-            const index = usuarios.findIndex(u => u.id === id);
-            if (index !== -1) {
-                usuarios.splice(index, 1);
-                guardarUsuarios(usuarios);
-                buscarUsuarios();
-                mostrarMensajeExito(`Usuario "${usuarioAEliminar.usuario}" eliminado correctamente.`);
-            }
-        }
-    }
-
-    function editarUsuario(id) {
-        const usuario = usuarios.find(u => u.id === id);
-        if (usuario) {
-            mostrarFormulario(usuario);
-        }
-    }
-
-    // Event Listeners
-    if (btnNuevo) btnNuevo.addEventListener('click', () => mostrarFormulario());
-    if (cerrarFormulario) cerrarFormulario.addEventListener('click', ocultarFormulario);
-    if (cancelarFormulario) cancelarFormulario.addEventListener('click', ocultarFormulario);
-    if (overlay) overlay.addEventListener('click', ocultarFormulario);
-
-    if (formularioUsuario) {
-        formularioUsuario.addEventListener('click', function (event) {
-            event.stopPropagation();
-        });
-    }
-
-    if (formNuevoUsuario) {
-        formNuevoUsuario.addEventListener('submit', guardarUsuario);
-    }
-
-    // Eventos de búsqueda y paginación
+    // Búsqueda
     if (btnSearch) btnSearch.addEventListener('click', buscarUsuarios);
-
     if (searchInput) {
-        searchInput.addEventListener('keyup', function (event) {
-            if (event.key === 'Enter') {
-                buscarUsuarios();
-            }
+        searchInput.addEventListener('keyup', (event) => {
+            if (event.key === 'Enter') buscarUsuarios();
         });
     }
 
+    // Registros por página
     if (recordsPerPageSelect) {
         recordsPerPageSelect.addEventListener('change', function () {
             recordsPerPage = parseInt(this.value);
@@ -655,6 +858,7 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
+    // Paginación
     if (firstPageBtn) firstPageBtn.addEventListener('click', () => goToPage(1));
     if (prevPageBtn) prevPageBtn.addEventListener('click', () => goToPage(currentPage - 1));
     if (nextPageBtn) nextPageBtn.addEventListener('click', () => goToPage(currentPage + 1));
@@ -663,9 +867,9 @@ document.addEventListener('DOMContentLoaded', function () {
         goToPage(totalPages);
     });
 
-    // Delegación de eventos para botones de acción
+    // Acciones de tabla (editar/eliminar) - delegación de eventos
     if (usuariosBody) {
-        usuariosBody.addEventListener('click', function (event) {
+        usuariosBody.addEventListener('click', (event) => {
             const eliminarBtn = event.target.closest('.btn-eliminar');
             if (eliminarBtn) {
                 const id = parseInt(eliminarBtn.getAttribute('data-id'));
@@ -682,88 +886,13 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // Cerrar con Escape
-    document.addEventListener('keydown', function (event) {
-        if (event.key === 'Escape' && formularioUsuario && formularioUsuario.classList.contains('active')) {
+    // Cerrar con tecla Escape
+    document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && formularioUsuario?.classList.contains('active')) {
             ocultarFormulario();
         }
     });
 
-    // Agregar estilos CSS
-    function addStyles() {
-        if (document.getElementById('dynamic-user-styles')) return;
-
-        const style = document.createElement('style');
-        style.id = 'dynamic-user-styles';
-        style.textContent = `
-            .rol-admin {
-                background-color: #d4edda;
-                color: #155724;
-                padding: 5px 10px;
-                border-radius: 20px;
-                font-weight: 600;
-                font-size: 12px;
-                display: inline-block;
-            }
-            
-            .rol-usuario {
-                background-color: #fff3cd;
-                color: #856404;
-                padding: 5px 10px;
-                border-radius: 20px;
-                font-weight: 600;
-                font-size: 12px;
-                display: inline-block;
-            }
-            
-            .usuario-info {
-                display: flex;
-                flex-direction: column;
-            }
-            
-            .fecha-creacion {
-                font-size: 11px;
-                color: #6c757d;
-                margin-top: 2px;
-            }
-            
-            .password-display {
-                display: flex;
-                align-items: center;
-                gap: 8px;
-                padding: 8px 12px;
-                background-color: #f8f9fa;
-                border-radius: 4px;
-                transition: background-color 0.2s;
-                cursor: pointer;
-            }
-            
-            .password-display:hover {
-                background-color: #e9ecef;
-            }
-            
-            .password-text {
-                font-family: 'Courier New', monospace;
-                font-size: 14px;
-                user-select: none;
-            }
-            
-            .eye-icon {
-                color: #6c757d;
-                font-size: 14px;
-                transition: color 0.2s;
-                cursor: pointer;
-            }
-            
-            .eye-icon:hover {
-                color: #495057;
-            }
-        `;
-
-        document.head.appendChild(style);
-    }
-
-    // Inicializar
-    addStyles();
+    // Inicializar tabla
     renderTable();
 });
