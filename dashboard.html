@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FRESA CON CREMA</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Añade Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="assets/css/styles.css">
+    <link rel="stylesheet" href="assets/css/orders-styles.css">
+    <script src="assets/js/auth.js" defer></script>
+    <script src="assets/js/mobile-menu.js" defer></script>
+    <script src="assets/js/orders.js" defer></script>
+    <script>
+        // Verificar autenticación al cargar
+        document.addEventListener('DOMContentLoaded', function () {
+            if (!window.auth.initializeProtectedPage()) return;
+
+            // Mostrar nombre de usuario en el header
+            const user = window.auth.getCurrentUser();
+            const userSpan = document.querySelector('.user-profile span');
+            if (user && userSpan) {
+                userSpan.textContent = user.nombre || 'Administrador';
+            }
+        });
+    </script>
+
+</head>
+
+<body class="bg-gray-100">
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <button id="hamburgerBtn" class="hamburger-btn" style="display: none;">
+                    ☰
+                </button>
+                <div class="logo-section">
+                    <div class="logo-icon">🍓</div>
+                    <div class="logo-text">
+                        <h1>FRESA CON CREMA</h1>
+                        <p>Tu Antojito</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="header-actions">
+            <button class="icon-btn">🔔<span class="badge">3</span></button>
+            <button class="icon-btn" onclick="window.location.href='carrito.html'">
+                🛒
+                <span class="badge" id="cartBadge" style="display: none;">0</span>
+            </button>
+            <div class="user-profile">
+                <img src="assets/imagen/Photocon.png" alt="Usuario"
+                    onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2240%22 height=%2240%22%3E%3Ccircle cx=%2220%22 cy=%2220%22 r=%2220%22 fill=%22%23ec4899%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 text-anchor=%22middle%22 dy=%22.3em%22 fill=%22white%22 font-size=%2216%22 font-weight=%22bold%22%3EA%3C/text%3E%3C/svg%3E'">
+                <span id="userName">Administrador</span>
+            </div>
+        </div>
+    </header>
+
+    <div class="flex">
+        <!-- Sidebar (igual en todas las páginas) -->
+        <aside id="sidebar" class="sidebar">
+            <nav class="mt-8">
+                <a href="dashboard.html" class="nav-item active">
+                    <span class="nav-icon">🏠</span>
+                    <span>Dashboard</span>
+                </a>
+                <a href="productos.html" class="nav-item">
+                    <span class="nav-icon">🍓</span>
+                    <span>Productos</span>
+                </a>
+                <a href="carrito.html" class="nav-item">
+                    <span class="nav-icon">🛒</span>
+                    <span>Carrito</span>
+                    <span class="cart-badge-mobile" id="cartBadgeMobile">0</span>
+                </a>
+                <a href="analiticas.html" class="nav-item">
+                    <span class="nav-icon">📊</span>
+                    <span>Analíticas</span>
+                </a>
+                <a href="usuarios.html" class="nav-item">
+                    <span class="nav-icon">👥</span>
+                    <span>Usuarios</span>
+                </a>
+                <a href="orders.html" class="nav-item">
+                    <span class="nav-icon">📋</span>
+                    <span>Pedidos</span>
+                </a>
+                <a href="configuracion.html" class="nav-item">
+                    <span class="nav-icon">⚙️</span>
+                    <span>Configuracion</span>
+                </a>
+            </nav>
+        </aside>
+
+
+        <!-- Overlay para móvil -->
+        <div id="sidebarOverlay" class="sidebar-overlay"></div>
+
+        <!-- Contenido -->
+        <main class="main-content">
+            <!-- Tarjetas resumen -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <div class="bg-white p-6 rounded-xl shadow-sm border">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <p class="text-gray-500 text-sm">Total Pedidos</p>
+                            <h3 id="totalOrdersCard" class="text-3xl font-bold mt-2">0</h3>
+                            <p class="text-green-500 text-sm mt-1" id="ordersTrend">↑ 12.5%</p>
+                        </div>
+                        <div class="bg-blue-50 p-3 rounded-lg">
+                            <span class="text-blue-500 text-2xl">📦</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white p-6 rounded-xl shadow-sm border">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <p class="text-gray-500 text-sm">Ingresos Totales</p>
+                            <h3 id="revenueCard" class="text-3xl font-bold mt-2">bs 0</h3>
+                            <p class="text-green-500 text-sm mt-1" id="revenueTrend">↑ 8.2%</p>
+                        </div>
+                        <div class="bg-green-50 p-3 rounded-lg">
+                            <span class="text-green-500 text-2xl">💰</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white p-6 rounded-xl shadow-sm border">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <p class="text-gray-500 text-sm">Pedidos Procesando</p>
+                            <h3 id="processingOrdersCard" class="text-3xl font-bold mt-2">0</h3>
+                            <p class="text-yellow-500 text-sm mt-1">En preparación</p>
+                        </div>
+                        <div class="bg-yellow-50 p-3 rounded-lg">
+                            <span class="text-yellow-500 text-2xl">⏳</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white p-6 rounded-xl shadow-sm border">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <p class="text-gray-500 text-sm">Pedidos Completados</p>
+                            <h3 id="completedOrdersCard" class="text-3xl font-bold mt-2">0</h3>
+                            <p class="text-green-500 text-sm mt-1">Entregados</p>
+                        </div>
+                        <div class="bg-purple-50 p-3 rounded-lg">
+                            <span class="text-purple-500 text-2xl">✅</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pedidos Recientes Table -->
+            <div class="bg-white rounded-lg shadow overflow-hidden mb-8">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <div class="flex flex-col md:flex-row md:justify-between md:items-center space-y-4 md:space-y-0">
+                        <h2 class="text-xl font-semibold text-gray-800">Pedidos Recientes</h2>
+
+                        <div class="flex flex-col md:flex-row md:items-center space-y-3 md:space-y-0 md:space-x-4">
+                            <!-- Campo de Búsqueda -->
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor"
+                                        viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                                    </svg>
+                                </div>
+                                <input type="text" id="searchOrders"
+                                    class="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 w-full md:w-64"
+                                    placeholder="Buscar ID, producto, usuario, fecha...">
+                            </div>
+
+                            <!-- Selector de registros -->
+                            <div class="flex items-center space-x-2">
+                                <span class="text-sm text-gray-600 whitespace-nowrap">Mostrar</span>
+                                <select id="recordsPerPage"
+                                    class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                                    <option value="3" selected>3 registros</option>
+                                    <option value="5">5 registros</option>
+                                    <option value="10">10 registros</option>
+                                    <option value="25">25 registros</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full min-w-max" id="ordersTable">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    ID</th>
+                                <th
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Usuario</th>
+                                <th
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Producto</th>
+                                <th
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Fecha</th>
+                                <th
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Estado</th>
+                                <th
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-200" id="ordersTableBody">
+                            <!-- Los pedidos se cargarán dinámicamente -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Footer de la tabla -->
+                <div class="px-6 py-4 border-t border-gray-200 flex justify-between items-center">
+                    <div class="text-sm text-gray-600">
+                        Mostrando <span id="visibleCount">0</span> de <span id="totalCount">0</span> registros
+                    </div>
+                    <div class="flex space-x-2">
+                        <button id="prevPage" class="pagination-btn" disabled>Anterior</button>
+                        <span id="currentPage" class="current-page">1</span>
+                        <button id="nextPage" class="pagination-btn" disabled>Siguiente</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal de Detalles de Pedido -->
+            <div id="orderDetailModal"
+                class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+                <div class="modal-content">
+                    <div class="flex justify-between items-center border-b pb-3">
+                        <h3 class="text-xl font-semibold text-gray-800">Detalles del Pedido</h3>
+                        <button id="closeModal" class="text-gray-400 hover:text-gray-600">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                        </button>
+                    </div>
+
+                    <div class="mt-4" id="orderDetailContent">
+                        <!-- Los detalles se cargarán aquí -->
+                    </div>
+
+                    <div class="mt-6 flex justify-end space-x-3">
+                        <button id="printOrder"
+                            class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition">
+                            Imprimir
+                        </button>
+                        <button id="closeModalBtn"
+                            class="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 transition">
+                            Cerrar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+    </div>
+
+    <script>
+        // Función para cargar pedidos recientes
+        function loadRecentOrders() {
+            try {
+                const orders = JSON.parse(localStorage.getItem('fresa_orders') || '[]');
+                const recentOrdersContainer = document.getElementById('recentOrders');
+
+                if (orders.length === 0) {
+                    recentOrdersContainer.innerHTML = `
+                        <p class="text-gray-500 text-center py-8">No hay pedidos recientes</p>
+                    `;
+                    return;
+                }
+
+                // Tomar los últimos 5 pedidos
+                const recentOrders = orders.slice(0, 5);
+
+                const html = recentOrders.map(order => `
+                    <div class="border-b last:border-0 py-4">
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <p class="font-medium">${order.id}</p>
+                                <p class="text-sm text-gray-500">${order.userName}</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="font-bold">bs ${order.totalAmount.toFixed(2)}</p>
+                                <span class="text-xs px-2 py-1 rounded-full ${order.status === 'completed' ? 'bg-green-100 text-green-800' :
+                        order.status === 'processing' ? 'bg-yellow-100 text-yellow-800' :
+                            order.status === 'active' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'}">
+                                    ${order.status === 'completed' ? 'Completado' :
+                        order.status === 'processing' ? 'Procesando' :
+                            order.status === 'active' ? 'Activo' : 'Inactivo'}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+
+                recentOrdersContainer.innerHTML = html;
+            } catch (error) {
+                console.error('Error loading recent orders:', error);
+            }
+        }
+
+        // Cargar pedidos recientes al iniciar
+        document.addEventListener('DOMContentLoaded', function () {
+            loadRealStats();
+            loadRecentOrders();
+        });
+    </script>
+</body>
+
+</html>

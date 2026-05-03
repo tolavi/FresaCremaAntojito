@@ -1,0 +1,84 @@
+/* pagos.css */
+/* Botón de pago mejorado */
+.payment-processing {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+.payment-processing::before {
+    content: "";
+    width: 20px;
+    height: 20px;
+    border: 3px solid rgba(255, 255, 255, 0.3);
+    border-top: 3px solid white;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    display: none;
+}
+
+.payment-processing.loading::before {
+    display: block;
+}
+
+.payment-processing.loading span {
+    display: none;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Modales responsive */
+@media (max-width: 640px) {
+    .qr-modal-body {
+        padding: 15px !important;
+    }
+    
+    .order-info p {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+    }
+    
+    .qr-buttons {
+        flex-direction: column;
+    }
+    
+    .payment-method-btn {
+        flex-direction: column;
+        text-align: center;
+        gap: 10px;
+    }
+    
+    .payment-icon {
+        margin: 0 auto;
+    }
+}
+
+/* Efectos de hover para métodos de pago */
+.payment-method-btn {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.payment-method-btn:active {
+    transform: scale(0.98);
+}
+
+/* Notificación de pago exitoso */
+.payment-success {
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: white;
+    padding: 15px;
+    border-radius: 10px;
+    margin: 10px 0;
+    text-align: center;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.8; }
+}

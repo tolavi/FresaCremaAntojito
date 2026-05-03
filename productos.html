@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FRESA CON CREMA</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="assets/css/styles.css">
+    <link rel="stylesheet" href="assets/css/productos.css">
+    <script src="assets/js/auth.js" defer></script>
+    <script src="assets/js/mobile-menu.js" defer></script>
+    <script src="assets/js/productos.js" defer></script>
+    <script>
+        /* Script temporal - ejecutar en consola
+        localStorage.removeItem('fresa_products_db');
+        localStorage.removeItem('gramajeSelections');
+        localStorage.removeItem('fresa_productos');
+        alert('LocalStorage limpiado. Recarga la página.');
+        location.reload();*/
+    </script>
+</head>
+
+<body class="bg-gray-100">
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <button id="hamburgerBtn" class="hamburger-btn">☰</button>
+                <div class="logo-section">
+                    <div class="logo-icon">🍓</div>
+                    <div class="logo-text">
+                        <h1>FRESA CON CREMA</h1>
+                        <p>Tu Antojito</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="header-actions">
+            <button class="icon-btn">🔔<span class="badge">3</span></button>
+            <button class="icon-btn" onclick="window.location.href='carrito.html'">
+                🛒
+                <span class="badge" id="cartBadge" style="display: none;">0</span>
+            </button>
+            <div class="user-profile">
+                <img src="assets/imagen/Photocon.png" alt="Usuario"
+                    onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Ccircle cx=%2250%22 cy=%2250%22 r=%2245%22 fill=%22%23ec4899%22/%3E%3Ctext x=%2250%22 y=%2255%22 text-anchor=%22middle%22 fill=%22white%22 font-size=%2240%22%3E👤%3C/text%3E%3C/svg%3E'">
+                <span>Administrador</span>
+            </div>
+        </div>
+    </header>
+
+    <div class="flex">
+        <!-- Sidebar -->
+        <aside id="sidebar" class="sidebar">
+            <nav class="mt-8">
+                <a href="dashboard.html" class="nav-item">
+                    <span class="nav-icon">🏠</span>
+                    <span>Dashboard</span>
+                </a>
+                <a href="productos.html" class="nav-item active">
+                    <span class="nav-icon">🍓</span>
+                    <span>Productos</span>
+                </a>
+                <a href="carrito.html" class="nav-item">
+                    <span class="nav-icon">🛒</span>
+                    <span>Carrito</span>
+                    <span class="cart-badge-mobile" id="cartBadgeMobile">0</span>
+                </a>
+                <a href="analiticas.html" class="nav-item">
+                    <span class="nav-icon">📊</span>
+                    <span>Analíticas</span>
+                </a>
+                <a href="usuarios.html" class="nav-item">
+                    <span class="nav-icon">👥</span>
+                    <span>Usuarios</span>
+                </a>
+                <a href="orders.html" class="nav-item">
+                    <span class="nav-icon">📋</span>
+                    <span>Pedidos</span>
+                </a>
+                <a href="configuracion.html" class="nav-item">
+                    <span class="nav-icon">⚙️</span>
+                    <span>Configuracion</span>
+                </a>
+            </nav>
+        </aside>
+
+        <div id="sidebarOverlay" class="sidebar-overlay"></div>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="container">
+                <!-- Hero Section -->
+                <div class="hero">
+                    <div class="hero-content">
+                        <h2>Bienvenido a Tu Antojito 🍓</h2>
+                        <p class="hero-text">
+                            Las mejores fresas con crema de la ciudad. Frescas, deliciosas y preparadas con amor cada
+                            día.
+                        </p>
+                        <div class="hero-badges">
+                            <div class="badge-item">⭐ Calidad Premium</div>
+                            <div class="badge-item">🚀 Entrega Rápida</div>
+                            <div class="badge-item">💯 Frescura Garantizada</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Products -->
+                <h3 class="section-title">Nuestros Productos</h3>
+                <div class="products-grid" id="productsGrid"></div>
+
+                <!-- Info Section -->
+                <div class="info-grid">
+                    <div class="info-card">
+                        <div class="info-icon">🍓</div>
+                        <h4>Fresas Frescas</h4>
+                        <p>Seleccionadas diariamente para garantizar la mejor calidad</p>
+                    </div>
+                    <div class="info-card">
+                        <div class="info-icon">🥛</div>
+                        <h4>Crema Natural</h4>
+                        <p>Preparada con ingredientes naturales y receta tradicional</p>
+                    </div>
+                    <div class="info-card">
+                        <div class="info-icon">⚡</div>
+                        <h4>Servicio Rápido</h4>
+                        <p>Tu pedido listo en minutos para disfrutar al instante</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-icon">🍓</div>
+                <p class="footer-title">FRESA CON CREMA - Tu Antojito</p>
+                <p class="footer-text">Delicias frescas todos los días</p>
+            </div>
+        </div>
+    </footer>
+</body>
+
+</html>

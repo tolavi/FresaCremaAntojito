@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FRESA CON CREMA</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Añade Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../assets/css/styles.css">
+    <link rel="stylesheet" href="../assets/css/usuario.css">
+    <script src="../assets/js/auth.js" defer></script>
+    <script src="../assets/js/mobile-menu.js" defer></script>
+    <script src="../assets/js/usuarios.js" defer></script>
+    <script>
+        // Verificar autenticación al cargar
+        document.addEventListener('DOMContentLoaded', function () {
+            if (!window.auth.initializeProtectedPage()) return;
+
+            // Mostrar nombre de usuario en el header
+            const user = window.auth.getCurrentUser();
+            const userSpan = document.querySelector('.user-profile span');
+            if (user && userSpan) {
+                userSpan.textContent = user.nombre || 'Administrador';
+            }
+        });
+    </script>
+</head>
+
+<body class="bg-gray-100">
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <button id="hamburgerBtn" class="hamburger-btn" style="display: none;">
+                    ☰
+                </button>
+                <div class="logo-section">
+                    <div class="logo-icon">🍓</div>
+                    <div class="logo-text">
+                        <h1>FRESA CON CREMA</h1>
+                        <p>Tu Antojito</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="header-actions">
+            <button class="icon-btn">🔔<span class="badge">3</span></button>
+            <button class="icon-btn" onclick="window.location.href='carrito.html'">
+                🛒
+                <span class="badge" id="cartBadge" style="display: none;">0</span>
+            </button>
+            <div class="user-profile">
+                <img src="assets/imagen/Photocon.png" alt="Usuario"
+                    onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2240%22 height=%2240%22%3E%3Ccircle cx=%2220%22 cy=%2220%22 r=%2220%22 fill=%22%23ec4899%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 text-anchor=%22middle%22 dy=%22.3em%22 fill=%22white%22 font-size=%2216%22 font-weight=%22bold%22%3EA%3C/text%3E%3C/svg%3E'">
+                <span id="userName">Administrador</span>
+            </div>
+        </div>
+    </header>
+
+    <div class="flex">
+        <!-- Sidebar (igual en todas las páginas) -->
+        <aside id="sidebar" class="sidebar">
+            <nav class="mt-8">
+                <a href="dashboard.html" class="nav-item">
+                    <span class="nav-icon">🏠</span>
+                    <span>Dashboard</span>
+                </a>
+                <a href="productos.html" class="nav-item">
+                    <span class="nav-icon">🍓</span>
+                    <span>Productos</span>
+                </a>
+                <a href="carrito.html" class="nav-item">
+                    <span class="nav-icon">🛒</span>
+                    <span>Carrito</span>
+                    <span class="cart-badge-mobile" id="cartBadgeMobile">0</span>
+                </a>
+                <a href="analiticas.html" class="nav-item">
+                    <span class="nav-icon">📊</span>
+                    <span>Analíticas</span>
+                </a>
+                <a href="usuarios.html" class="nav-item active">
+                    <span class="nav-icon">👥</span>
+                    <span>Usuarios</span>
+                </a>
+                <a href="orders.html" class="nav-item">
+                    <span class="nav-icon">📋</span>
+                    <span>Pedidos</span>
+                </a>
+                <a href="configuracion.html" class="nav-item">
+                    <span class="nav-icon">⚙️</span>
+                    <span>Configuracion</span>
+                </a>
+            </nav>
+        </aside>
+
+
+        <!-- Overlay para móvil -->
+        <div id="sidebarOverlay" class="sidebar-overlay"></div>
+
+        <!-- Main Content -->
+        <main class="main-content" style="flex: 1; padding: 1.5rem; overflow-x: hidden;">
+            <!-- Overlay para formulario flotante -->
+            <div id="overlay" class="overlay"></div>
+
+            <!-- Formulario flotante para nuevo usuario -->
+            <div id="formulario-usuario" class="formulario-flotante">
+                <div class="form-header">
+                    <h2><i class="fas fa-user-plus"></i> Nuevo Usuario</h2>
+                    <button id="cerrar-formulario" class="btn-cerrar">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+
+                <form id="form-nuevo-usuario">
+                    <div class="form-group">
+                        <label for="nombre-usuario">
+                            <i class="fas fa-user"></i> Nombre de Usuario
+                        </label>
+                        <input type="text" id="nombre-usuario" required placeholder="Ingrese el nombre de usuario">
+                        <div class="error-message" id="error-nombre"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="correo-usuario">
+                            <i class="fas fa-envelope"></i> Correo Electrónico
+                        </label>
+                        <input type="email" id="correo-usuario" required placeholder="ejemplo@correo.com">
+                        <div class="error-message" id="error-correo"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="rol-usuario">
+                            <i class="fas fa-user-tag"></i> Rol
+                        </label>
+                        <select id="rol-usuario" required>
+                            <option value="">Seleccione un rol</option>
+                            <option value="vendedor">Vendedor</option>
+                            <option value="vendedor1">Vendedor 1</option>
+                            <option value="supervisor">Supervisor</option>
+                            <option value="admin">Administrador</option>
+                        </select>
+                        <div class="error-message" id="error-rol"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="password-usuario">
+                            <i class="fas fa-lock"></i> Contraseña
+                        </label>
+                        <input type="password" id="password-usuario" required placeholder="Mínimo 6 caracteres">
+                        <div class="error-message" id="error-password"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="confirmar-password">
+                            <i class="fas fa-lock"></i> Confirmar Contraseña
+                        </label>
+                        <input type="password" id="confirmar-password" required placeholder="Repita la contraseña">
+                        <div class="error-message" id="error-confirmar"></div>
+                    </div>
+
+                    <div class="form-buttons">
+                        <button type="button" id="cancelar-formulario" class="btn-cancelar">
+                            <i class="fas fa-times"></i> Cancelar
+                        </button>
+                        <button type="submit" class="btn-guardar">
+                            <i class="fas fa-save"></i> Guardar Usuario
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="Container">
+
+                <header>
+                    <h1><i class="fas fa-users"></i> Lista de Usuarios</h1>
+                </header>
+
+                <div class="controls">
+                    <button id="btn-nuevo" class="btn-nuevo">
+                        <i class="fas fa-plus"></i> Nuevo
+                    </button>
+
+                    <div class="search-container">
+                        <div class="records-show">
+                            <label>Mostrar</label>
+                            <select id="records-per-page">
+                                <option value="5">5</option>
+                                <option value="10">10</option>
+                                <option value="20">20</option>
+                                <option value="50">50</option>
+                            </select>
+                            <label>registros</label>
+                        </div>
+
+                        <div class="search-box">
+                            <input type="text" id="search-input" placeholder="Buscar...">
+                            <button class="btn-search"><i class="fas fa-search"></i></button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="table-container">
+                    <table id="usuarios-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Usuario</th>
+                                <th>Correo</th>
+                                <th>Rol</th>
+                                <th>Contraseña</th>
+                                <th>Foto</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="usuarios-body">
+                            <!-- Los datos se cargarán dinámicamente con JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="pagination-info">
+                    <div id="records-info">Mostrando 1 a 3 de 3 registros</div>
+
+                    <div class="pagination-controls">
+                        <button id="first-page" class="pagination-btn" disabled>
+                            <i class="fas fa-fast-backward"></i> Primero
+                        </button>
+                        <button id="prev-page" class="pagination-btn" disabled>
+                            <i class="fas fa-backward"></i> Anterior
+                        </button>
+                        <span id="current-page" class="page-number">1</span>
+                        <button id="next-page" class="pagination-btn" disabled>
+                            Siguiente <i class="fas fa-forward"></i>
+                        </button>
+                        <button id="last-page" class="pagination-btn" disabled>
+                            Último <i class="fas fa-fast-forward"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Inicializar el menú móvil
+        document.addEventListener('DOMContentLoaded', function () {
+            const hamburgerBtn = document.getElementById('hamburgerBtn');
+            const sidebar = document.getElementById('sidebar');
+            const sidebarOverlay = document.getElementById('sidebarOverlay');
+
+            if (hamburgerBtn && sidebar && sidebarOverlay) {
+                hamburgerBtn.addEventListener('click', function () {
+                    sidebar.classList.toggle('mobile-open');
+                    sidebarOverlay.classList.toggle('active');
+                    hamburgerBtn.classList.toggle('active');
+                });
+
+                sidebarOverlay.addEventListener('click', function () {
+                    sidebar.classList.remove('mobile-open');
+                    sidebarOverlay.classList.remove('active');
+                    hamburgerBtn.classList.remove('active');
+                });
+            }
+
+            // Mostrar nombre de usuario actual
+            const user = window.auth ? window.auth.getCurrentUser() : null;
+            const userNameDisplay = document.getElementById('userNameDisplay');
+            if (user && userNameDisplay) {
+                userNameDisplay.textContent = user.nombre || 'Administrador';
+            }
+        });
+    </script>
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-icon">🍓</div>
+                <p class="footer-title">FRESA CON CREMA - Tu Antojito</p>
+                <p class="footer-text">Delicias frescas todos los días</p>
+            </div>
+        </div>
+    </footer>
+</body>
+
+</html>

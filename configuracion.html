@@ -1,0 +1,878 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Configuración - Fresa con Crema</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        // Verificar autenticación al cargar
+        document.addEventListener('DOMContentLoaded', function () {
+            if (!window.auth.initializeProtectedPage()) return;
+
+            // Mostrar nombre de usuario en el header
+            const user = window.auth.getCurrentUser();
+            const userSpan = document.querySelector('.user-profile span');
+            if (user && userSpan) {
+                userSpan.textContent = user.nombre || 'Administrador';
+            }
+        });
+    </script>
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Estilos personalizados -->
+    <link rel="stylesheet" href="assets/css/styles.css">
+    <link rel="stylesheet" href="assets/css/configuracion.css">
+
+    <style>
+        /* Estilos adicionales para la tabla de productos */
+        .product-image {
+            width: 60px;
+            height: 60px;
+            object-fit: cover;
+            border-radius: 8px;
+            border: 2px solid #e5e7eb;
+        }
+
+        .product-image-placeholder {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #ec4899, #ef4444);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.5rem;
+        }
+
+        .gramaje-badge {
+            background: #e0f2fe;
+            color: #0369a1;
+            padding: 2px 6px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            margin-right: 4px;
+            display: inline-block;
+        }
+
+        .status-badge {
+            padding: 4px 8px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            display: inline-block;
+        }
+
+        .status-active {
+            background-color: #d1fae5;
+            color: #065f46;
+        }
+
+        .status-inactive {
+            background-color: #fee2e2;
+            color: #991b1b;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-100">
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <button id="hamburgerBtn" class="hamburger-btn" style="display: none;">
+                    ☰
+                </button>
+                <div class="logo-section">
+                    <div class="logo-icon">🍓</div>
+                    <div class="logo-text">
+                        <h1>FRESA CON CREMA</h1>
+                        <p>Tu Antojito</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="header-actions">
+            <button class="icon-btn">🔔<span class="badge">3</span></button>
+            <button class="icon-btn" onclick="window.location.href='carrito.html'">
+                🛒
+                <span class="badge" id="cartBadge" style="display: none;">0</span>
+            </button>
+            <div class="user-profile">
+                <img src="assets/imagen/Photocon.png" alt="Usuario"
+                    onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2240%22 height=%2240%22%3E%3Ccircle cx=%2220%22 cy=%2220%22 r=%2220%22 fill=%22%23ec4899%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 text-anchor=%22middle%22 dy=%22.3em%22 fill=%22white%22 font-size=%2216%22 font-weight=%22bold%22%3EA%3C/text%3E%3C/svg%3E'">
+                <span id="userName">Administrador</span>
+            </div>
+        </div>
+    </header>
+
+    <div class="flex">
+        <!-- Sidebar (igual en todas las páginas) -->
+        <aside id="sidebar" class="sidebar">
+            <nav class="mt-8">
+                <a href="dashboard.html" class="nav-item">
+                    <span class="nav-icon">🏠</span>
+                    <span>Dashboard</span>
+                </a>
+                <a href="productos.html" class="nav-item">
+                    <span class="nav-icon">🍓</span>
+                    <span>Productos</span>
+                </a>
+                <a href="carrito.html" class="nav-item">
+                    <span class="nav-icon">🛒</span>
+                    <span>Carrito</span>
+                    <span id="cartBadgeMobile" class="cart-badge"></span>
+                </a>
+                <a href="analiticas.html" class="nav-item">
+                    <span class="nav-icon">📊</span>
+                    <span>Analíticas</span>
+                </a>
+                <a href="usuarios.html" class="nav-item">
+                    <span class="nav-icon">👥</span>
+                    <span>Usuarios</span>
+                </a>
+                <a href="orders.html" class="nav-item">
+                    <span class="nav-icon">📋</span>
+                    <span>Pedidos</span>
+                </a>
+                <a href="configuracion.html" class="nav-item active">
+                    <span class="nav-icon">⚙️</span>
+                    <span>Configuración</span>
+                </a>
+            </nav>
+
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+
+            <h class="page-title">Configuración del Sistema</h>
+            <!-- Configuración Content -->
+            <div class="configuracion-container">
+                <!-- Sidebar de configuración -->
+                <div class="config-sidebar">
+                    <div class="config-sidebar-header">
+                        <h3><i class="fas fa-cog"></i> Ajustes</h3>
+                    </div>
+                    <nav class="config-nav">
+                        <button class="config-nav-item active" data-section="general">
+                            <i class="fas fa-sliders-h"></i>
+                            <span>General</span>
+                        </button>
+                        <button class="config-nav-item" data-section="productos">
+                            <i class="fas fa-utensils"></i>
+                            <span>Productos</span>
+                        </button>
+                        <button class="config-nav-item" data-section="pedidos">
+                            <i class="fas fa-shopping-bag"></i>
+                            <span>Pedidos</span>
+                        </button>
+                        <button class="config-nav-item" data-section="pagos">
+                            <i class="fas fa-credit-card"></i>
+                            <span>Pagos</span>
+                        </button>
+                        <button class="config-nav-item" data-section="usuarios">
+                            <i class="fas fa-users"></i>
+                            <span>Usuarios</span>
+                        </button>
+                        <button class="config-nav-item" data-section="seguridad">
+                            <i class="fas fa-shield-alt"></i>
+                            <span>Seguridad</span>
+                        </button>
+                    </nav>
+                </div>
+
+                <!-- Contenido principal de configuración -->
+                <div class="config-content">
+                    <!-- Sección General -->
+                    <section id="general-section" class="config-section active">
+                        <div class="section-header">
+                            <h2><i class="fas fa-sliders-h"></i> Configuración General</h2>
+                            <p>Ajustes básicos del sistema</p>
+                        </div>
+
+                        <div class="settings-grid">
+                            <div class="setting-card">
+                                <div class="setting-icon">
+                                    <i class="fas fa-store"></i>
+                                </div>
+                                <div class="setting-info">
+                                    <h4>Información de la Tienda</h4>
+                                    <p>Configura el nombre, logo y detalles de contacto</p>
+                                </div>
+                                <button class="setting-btn" onclick="openModal('storeModal')">
+                                    <i class="fas fa-edit"></i> Configurar
+                                </button>
+                            </div>
+
+                            <div class="setting-card">
+                                <div class="setting-icon">
+                                    <i class="fas fa-money-bill-wave"></i>
+                                </div>
+                                <div class="setting-info">
+                                    <h4>Moneda</h4>
+                                    <p>Establece la moneda predeterminada para los precios</p>
+                                </div>
+                                <button class="setting-btn" onclick="openModal('currencyModal')">
+                                    <i class="fas fa-edit"></i> Configurar
+                                </button>
+                            </div>
+
+                            <div class="setting-card">
+                                <div class="setting-icon">
+                                    <i class="fas fa-language"></i>
+                                </div>
+                                <div class="setting-info">
+                                    <h4>Idioma</h4>
+                                    <p>Selecciona el idioma de la interfaz</p>
+                                </div>
+                                <button class="setting-btn" onclick="openModal('languageModal')">
+                                    <i class="fas fa-edit"></i> Configurar
+                                </button>
+                            </div>
+
+                            <div class="setting-card">
+                                <div class="setting-icon">
+                                    <i class="fas fa-clock"></i>
+                                </div>
+                                <div class="setting-info">
+                                    <h4>Zona Horaria</h4>
+                                    <p>Configura la zona horaria del sistema</p>
+                                </div>
+                                <button class="setting-btn" onclick="openModal('timezoneModal')">
+                                    <i class="fas fa-edit"></i> Configurar
+                                </button>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Sección Productos -->
+                    <section id="productos-section" class="config-section">
+                        <div class="section-header">
+                            <h2><i class="fas fa-utensils"></i> Configuración de Productos</h2>
+                            <p>Gestiona todos los productos del sistema</p>
+                        </div>
+
+                        <!-- Botones de acción -->
+                        <div
+                            style="margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
+                            <div style="display: flex; gap: 10px;">
+                                <button class="btn-save" onclick="openProductModal('new')">
+                                    <i class="fas fa-plus"></i> Agregar Nuevo Producto
+                                </button>
+                                <button class="setting-btn" onclick="syncProducts()"
+                                    title="Sincronizar con página de productos">
+                                    <i class="fas fa-sync-alt"></i> Sincronizar
+                                </button>
+                            </div>
+
+                            <button class="setting-btn" onclick="loadProductsList()" title="Recargar productos">
+                                <i class="fas fa-redo"></i> Recargar
+                            </button>
+                        </div>
+
+                        <!-- Lista de productos -->
+                        <div class="products-table-container">
+                            <div class="table-responsive">
+                                <table class="products-table">
+                                    <thead>
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>Imagen</th>
+                                            <th>Nombre</th>
+                                            <th>Categoría</th>
+                                            <th>Gramajes</th>
+                                            <th>Precio Min</th>
+                                            <th>Precio Max</th>
+                                            <th>Estado</th>
+                                            <th>Acciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="productsList">
+                                        <!-- Los productos se cargarán dinámicamente -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Configuraciones adicionales -->
+                        <div class="settings-grid" style="margin-top: 30px;">
+                            <div class="setting-card">
+                                <div class="setting-icon">
+                                    <i class="fas fa-tags"></i>
+                                </div>
+                                <div class="setting-info">
+                                    <h4>Categorías</h4>
+                                    <p>Gestiona las categorías de productos</p>
+                                </div>
+                                <button class="setting-btn" onclick="openModal('categoriesModal')">
+                                    <i class="fas fa-edit"></i> Configurar
+                                </button>
+                            </div>
+
+                            <div class="setting-card">
+                                <div class="setting-icon">
+                                    <i class="fas fa-weight"></i>
+                                </div>
+                                <div class="setting-info">
+                                    <h4>Gramajes</h4>
+                                    <p>Configura los gramajes disponibles</p>
+                                </div>
+                                <button class="setting-btn" onclick="openModal('gramajesModal')">
+                                    <i class="fas fa-edit"></i> Configurar
+                                </button>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Sección Pedidos -->
+                    <section id="pedidos-section" class="config-section">
+                        <div class="section-header">
+                            <h2><i class="fas fa-shopping-bag"></i> Configuración de Pedidos</h2>
+                            <p>Gestiona todos los pedidos del sistema</p>
+                        </div>
+
+                        <!-- Botones de acción -->
+                        <div
+                            style="margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
+                            <div style="display: flex; gap: 10px;">
+                                <button class="setting-btn" onclick="syncPedidos()" title="Sincronizar pedidos">
+                                    <i class="fas fa-sync-alt"></i> Sincronizar
+                                </button>
+                                <button class="btn-save" onclick="exportPedidosExcel()">
+                                    <i class="fas fa-file-excel"></i> Exportar Excel
+                                </button>
+                                <button class="btn-save" onclick="exportPedidosPDF()">
+                                    <i class="fas fa-file-pdf"></i> Exportar PDF
+                                </button>
+                            </div>
+
+                            <button class="setting-btn" onclick="loadPedidosList()" title="Recargar pedidos">
+                                <i class="fas fa-redo"></i> Recargar
+                            </button>
+                        </div>
+
+                        <!-- Filtros de pedidos -->
+                        <div class="filters-section"
+                            style="margin-bottom: 20px; background: #f8fafc; padding: 15px; border-radius: 8px;">
+                            <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                                <div style="display: flex; gap: 5px; align-items: center;">
+                                    <label style="font-weight: 600; color: #374151;">Filtrar por:</label>
+                                    <select id="filterStatus"
+                                        style="padding: 8px; border-radius: 6px; border: 1px solid #d1d5db;"
+                                        onchange="applyFilters()">
+                                        <option value="todos">Todos los estados</option>
+                                        <option value="active">Activo</option>
+                                        <option value="procesando">Procesando</option>
+                                        <option value="completed">Completado</option>
+                                        <option value="anulado">Anulado</option>
+                                    </select>
+                                </div>
+
+                                <div style="display: flex; gap: 5px; align-items: center;">
+                                    <label style="font-weight: 600; color: #374151;">Fecha de:</label>
+                                    <input type="date" id="filterDateFrom"
+                                        style="padding: 8px; border-radius: 6px; border: 1px solid #d1d5db;"
+                                        onchange="applyFilters()">
+                                    <label style="font-weight: 600; color: #374151;">Hasta:</label>
+                                    <input type="date" id="filterDateTo"
+                                        style="padding: 8px; border-radius: 6px; border: 1px solid #d1d5db;"
+                                        onchange="applyFilters()">
+                                </div>
+
+                                <div style="display: flex; gap: 5px; align-items: center;">
+                                    <label style="font-weight: 600; color: #374151;">Buscar:</label>
+                                    <input type="text" id="searchPedido" placeholder="ID, Usuario o producto..."
+                                        style="padding: 8px; border-radius: 6px; border: 1px solid #d1d5db; min-width: 200px;"
+                                        onkeyup="applyFilters()">
+                                </div>
+
+                                <button class="btn-cancel" onclick="resetFilters()" style="padding: 8px 12px;">
+                                    <i class="fas fa-times"></i> Limpiar
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Estadísticas de filtros -->
+                        <div id="filterStats" style="margin-bottom: 10px; font-size: 0.9rem; color: #6b7280;"></div>
+
+                        <!-- Lista de pedidos -->
+                        <div class="pedidos-table-container">
+                            <div class="table-responsive">
+                                <table class="pedidos-table">
+                                    <thead>
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>Fecha/hora</th>
+                                            <th>Usuarios</th>
+                                            <th>Productos</th>
+                                            <th>Total</th>
+                                            <th>Estado</th>
+                                            <th>Método Pago</th>
+                                            <th>Acciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="pedidosList">
+                                        <!-- Los pedidos se cargarán dinámicamente -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Paginación -->
+                        <div id="pagination"
+                            style="display: flex; justify-content: center; align-items: center; gap: 15px; margin-top: 20px;">
+                            <button onclick="prevPage()" class="setting-btn">
+                                <i class="fas fa-chevron-left"></i> Anterior
+                            </button>
+                            <span id="pageInfo" style="color: #6b7280;"></span>
+                            <button onclick="nextPage()" class="setting-btn">
+                                Siguiente <i class="fas fa-chevron-right"></i>
+                            </button>
+                        </div>
+
+                        <!-- Configuraciones adicionales -->
+                        <div class="settings-grid" style="margin-top: 30px;">
+                            <div class="setting-card">
+                                <div class="setting-icon">
+                                    <i class="fas fa-truck"></i>
+                                </div>
+                                <div class="setting-info">
+                                    <h4>Entregas</h4>
+                                    <p>Configura opciones de entrega y delivery</p>
+                                </div>
+                                <button class="setting-btn" onclick="openModal('deliveryModal')">
+                                    <i class="fas fa-edit"></i> Configurar
+                                </button>
+                            </div>
+
+                            <div class="setting-card">
+                                <div class="setting-icon">
+                                    <i class="fas fa-bell"></i>
+                                </div>
+                                <div class="setting-info">
+                                    <h4>Notificaciones</h4>
+                                    <p>Configura alertas de nuevos pedidos</p>
+                                </div>
+                                <button class="setting-btn" onclick="openModal('notificationsModal')">
+                                    <i class="fas fa-edit"></i> Configurar
+                                </button>
+                            </div>
+
+                            <div class="setting-card">
+                                <div class="setting-icon">
+                                    <i class="fas fa-receipt"></i>
+                                </div>
+                                <div class="setting-info">
+                                    <h4>Facturación</h4>
+                                    <p>Configura datos fiscales y facturación</p>
+                                </div>
+                                <button class="setting-btn" onclick="openModal('billingModal')">
+                                    <i class="fas fa-edit"></i> Configurar
+                                </button>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Sección Pagos -->
+                    <section id="pagos-section" class="config-section">
+                        <div class="section-header">
+                            <h2><i class="fas fa-credit-card"></i> Configuración de Pagos</h2>
+                            <p>Gestiona métodos de pago y comisiones</p>
+                        </div>
+
+                        <div class="settings-grid">
+                            <div class="setting-card">
+                                <div class="setting-icon">
+                                    <i class="fas fa-qrcode"></i>
+                                </div>
+                                <div class="setting-info">
+                                    <h4>QR Code</h4>
+                                    <p>Configura pagos con código QR</p>
+                                </div>
+                                <button class="setting-btn" onclick="openModal('qrModal')">
+                                    <i class="fas fa-edit"></i> Configurar
+                                </button>
+                            </div>
+
+                            <div class="setting-card">
+                                <div class="setting-icon">
+                                    <i class="fas fa-money-bill"></i>
+                                </div>
+                                <div class="setting-info">
+                                    <h4>Efectivo</h4>
+                                    <p>Configura pagos en efectivo</p>
+                                </div>
+                                <button class="setting-btn" onclick="openModal('cashModal')">
+                                    <i class="fas fa-edit"></i> Configurar
+                                </button>
+                            </div>
+
+                            <div class="setting-card">
+                                <div class="setting-icon">
+                                    <i class="fas fa-credit-card"></i>
+                                </div>
+                                <div class="setting-info">
+                                    <h4>Tarjetas</h4>
+                                    <p>Configura pagos con tarjeta</p>
+                                </div>
+                                <button class="setting-btn" onclick="openModal('cardsModal')">
+                                    <i class="fas fa-edit"></i> Configurar
+                                </button>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Sección Usuarios -->
+                    <section id="usuarios-section" class="config-section">
+                        <div class="section-header">
+                            <h2><i class="fas fa-users"></i> Configuración de Usuarios</h2>
+                            <p>Ajustes de permisos y roles de usuarios</p>
+                        </div>
+
+                        <div class="settings-grid">
+                            <div class="setting-card">
+                                <div class="setting-icon">
+                                    <i class="fas fa-user-shield"></i>
+                                </div>
+                                <div class="setting-info">
+                                    <h4>Roles y Permisos</h4>
+                                    <p>Configura roles y permisos del sistema</p>
+                                </div>
+                                <button class="setting-btn" onclick="openModal('rolesModal')">
+                                    <i class="fas fa-edit"></i> Configurar
+                                </button>
+                            </div>
+
+                            <div class="setting-card">
+                                <div class="setting-icon">
+                                    <i class="fas fa-user-plus"></i>
+                                </div>
+                                <div class="setting-info">
+                                    <h4>Registro</h4>
+                                    <p>Configura opciones de registro de usuarios</p>
+                                </div>
+                                <button class="setting-btn" onclick="openModal('registrationModal')">
+                                    <i class="fas fa-edit"></i> Configurar
+                                </button>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Sección Seguridad -->
+                    <section id="seguridad-section" class="config-section">
+                        <div class="section-header">
+                            <h2><i class="fas fa-shield-alt"></i> Configuración de Seguridad</h2>
+                            <p>Ajustes de seguridad y protección del sistema</p>
+                        </div>
+
+                        <div class="settings-grid">
+                            <div class="setting-card">
+                                <div class="setting-icon">
+                                    <i class="fas fa-key"></i>
+                                </div>
+                                <div class="setting-info">
+                                    <h4>Contraseñas</h4>
+                                    <p>Configura requisitos de contraseñas</p>
+                                </div>
+                                <button class="setting-btn" onclick="openModal('passwordModal')">
+                                    <i class="fas fa-edit"></i> Configurar
+                                </button>
+                            </div>
+
+                            <div class="setting-card">
+                                <div class="setting-icon">
+                                    <i class="fas fa-user-lock"></i>
+                                </div>
+                                <div class="setting-info">
+                                    <h4>Autenticación</h4>
+                                    <p>Configura opciones de autenticación</p>
+                                </div>
+                                <button class="setting-btn" onclick="openModal('authModal')">
+                                    <i class="fas fa-edit"></i> Configurar
+                                </button>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal de Configuración de Tienda -->
+    <div id="storeModal" class="config-modal">
+        <div class="config-modal-content">
+            <div class="config-modal-header">
+                <h3><i class="fas fa-store"></i> Información de la Tienda</h3>
+                <button class="close-modal" onclick="closeModal('storeModal')">&times;</button>
+            </div>
+            <div class="config-modal-body">
+                <form id="storeForm">
+                    <div class="form-group">
+                        <label for="storeName"><i class="fas fa-signature"></i> Nombre de la Tienda</label>
+                        <input type="text" id="storeName" placeholder="Ej: Fresa con Crema" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="storeSlogan"><i class="fas fa-quote-left"></i> Eslogan</label>
+                        <input type="text" id="storeSlogan" placeholder="Ej: Delicias frescas todos los días">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="storePhone"><i class="fas fa-phone"></i> Teléfono</label>
+                        <input type="tel" id="storePhone" placeholder="Ej: +591 12345678">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="storeEmail"><i class="fas fa-envelope"></i> Email</label>
+                        <input type="email" id="storeEmail" placeholder="Ej: contacto@fresacrema.com">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="storeAddress"><i class="fas fa-map-marker-alt"></i> Dirección</label>
+                        <textarea id="storeAddress" rows="3" placeholder="Dirección de la tienda"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="storeLogo"><i class="fas fa-image"></i> Logo</label>
+                        <div class="logo-upload">
+                            <div class="logo-preview" id="logoPreview">
+                                <span>🍓</span>
+                            </div>
+                            <button type="button" class="btn-upload"
+                                onclick="document.getElementById('logoInput').click()">
+                                <i class="fas fa-upload"></i> Subir Logo
+                            </button>
+                            <input type="file" id="logoInput" accept="image/*" style="display: none;">
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="config-modal-footer">
+                <button class="btn-cancel" onclick="closeModal('storeModal')">Cancelar</button>
+                <button class="btn-save" onclick="saveStoreConfig()">Guardar Cambios</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Gramajes -->
+    <div id="gramajesModal" class="config-modal">
+        <div class="config-modal-content">
+            <div class="config-modal-header">
+                <h3><i class="fas fa-weight"></i> Configuración de Gramajes</h3>
+                <button class="close-modal" onclick="closeModal('gramajesModal')">&times;</button>
+            </div>
+            <div class="config-modal-body">
+                <div class="section-description">
+                    <p>Configura los gramajes disponibles para todos los productos.</p>
+                </div>
+
+                <div class="current-gramajes">
+                    <h4><i class="fas fa-list"></i> Gramajes Actuales</h4>
+                    <div class="gramajes-list" id="gramajesList">
+                        <!-- Gramajes se cargarán dinámicamente -->
+                    </div>
+                </div>
+
+                <div class="add-gramaje">
+                    <h4><i class="fas fa-plus"></i> Agregar Nuevo Gramaje</h4>
+                    <form id="addGramajeForm">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="newGramaje">Gramos</label>
+                                <input type="number" id="newGramaje" min="1" max="1000" placeholder="Ej: 30" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="newPrice">Precio (Bs)</label>
+                                <input type="number" id="newPrice" min="0" step="0.01" placeholder="Ej: 22.00" required>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn-add">
+                            <i class="fas fa-plus"></i> Agregar Gramaje
+                        </button>
+                    </form>
+                </div>
+            </div>
+            <div class="config-modal-footer">
+                <button class="btn-cancel" onclick="closeModal('gramajesModal')">Cancelar</button>
+                <button class="btn-save" onclick="saveGramajesConfig()">Guardar Gramajes</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Categorías -->
+    <div id="categoriesModal" class="config-modal">
+        <div class="config-modal-content">
+            <div class="config-modal-header">
+                <h3><i class="fas fa-tags"></i> Configuración de Categorías</h3>
+                <button class="close-modal" onclick="closeModal('categoriesModal')">&times;</button>
+            </div>
+            <div class="config-modal-body">
+                <div class="section-description">
+                    <p>Gestiona las categorías disponibles para los productos.</p>
+                </div>
+
+                <div class="current-categories">
+                    <h4><i class="fas fa-list"></i> Categorías Actuales</h4>
+                    <div class="categories-list" id="categoriesList">
+                        <!-- Categorías se cargarán dinámicamente -->
+                    </div>
+                </div>
+
+                <div class="add-category">
+                    <h4><i class="fas fa-plus"></i> Agregar Nueva Categoría</h4>
+                    <form id="addCategoryForm">
+                        <div class="form-row">
+                            <div class="form-group" style="flex: 2;">
+                                <label for="newCategoryName">Nombre de la Categoría</label>
+                                <input type="text" id="newCategoryName" placeholder="Ej: Clásicos, Premium, etc."
+                                    required>
+                            </div>
+                            <div class="form-group" style="flex: 1;">
+                                <label for="newCategoryColor">Color</label>
+                                <input type="color" id="newCategoryColor" value="#ec4899" required>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="newCategoryDescription">Descripción (opcional)</label>
+                            <input type="text" id="newCategoryDescription" placeholder="Describe la categoría...">
+                        </div>
+                        <button type="submit" class="btn-add">
+                            <i class="fas fa-plus"></i> Agregar Categoría
+                        </button>
+                    </form>
+                </div>
+            </div>
+            <div class="config-modal-footer">
+                <button class="btn-cancel" onclick="closeModal('categoriesModal')">Cancelar</button>
+                <button class="btn-save" onclick="saveCategoriesConfig()">Guardar Cambios</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para agregar/editar producto -->
+    <div id="productModal" class="config-modal">
+        <div class="config-modal-content" style="max-width: 800px;">
+            <div class="config-modal-header">
+                <h3><i class="fas fa-utensils"></i> <span id="productModalTitle">Nuevo Producto</span></h3>
+                <button class="close-modal" onclick="closeModal('productModal')">&times;</button>
+            </div>
+            <div class="config-modal-body">
+                <form id="productForm">
+                    <!-- Campos ocultos para IDs -->
+                    <input type="hidden" id="productId" value="">
+                    <input type="hidden" id="productDBId" value="">
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="productName"><i class="fas fa-signature"></i> Nombre del Producto *</label>
+                            <input type="text" id="productName" placeholder="Ej: Fresa con Crema Clásica" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="productCategory"><i class="fas fa-tag"></i> Categoría *</label>
+                            <select id="productCategory" required>
+                                <option value="">Seleccionar categoría</option>
+                                <option value="Clásicos">Clásicos</option>
+                                <option value="Premium">Premium</option>
+                                <option value="Natural">Natural</option>
+                                <option value="Especial">Especial</option>
+                                <option value="Otros">Otros</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="productDescription"><i class="fas fa-align-left"></i> Descripción</label>
+                        <textarea id="productDescription" rows="3" placeholder="Describe el producto..."></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label><i class="fas fa-weight"></i> Gramajes Disponibles *</label>
+                        <div class="gramajes-selection" id="gramajesSelection">
+                            <!-- Los gramajes se cargarán dinámicamente -->
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label><i class="fas fa-image"></i> Imagen del Producto</label>
+                        <div class="image-upload-container">
+                            <div class="image-preview" id="productImagePreview">
+                                <i class="fas fa-image"></i>
+                                <span>Vista previa</span>
+                            </div>
+                            <button type="button" class="btn-upload"
+                                onclick="document.getElementById('productImageInput').click()">
+                                <i class="fas fa-upload"></i> Subir Imagen
+                            </button>
+                            <input type="file" id="productImageInput" accept="image/*" style="display: none;"
+                                onchange="previewProductImage(event)">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="productStatus"><i class="fas fa-toggle-on"></i> Estado</label>
+                            <select id="productStatus">
+                                <option value="activo">Activo</option>
+                                <option value="inactivo">Inactivo</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="productFeatured"><i class="fas fa-star"></i> Destacado</label>
+                            <select id="productFeatured">
+                                <option value="no">No</option>
+                                <option value="si">Sí</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="productIngredients"><i class="fas fa-list"></i> Ingredientes (separados por
+                            comas)</label>
+                        <input type="text" id="productIngredients"
+                            placeholder="Ej: fresas, crema, azúcar, leche condensada">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="productAllergens"><i class="fas fa-exclamation-triangle"></i> Alérgenos</label>
+                        <input type="text" id="productAllergens" placeholder="Ej: lácteos, frutos secos">
+                    </div>
+                </form>
+            </div>
+            <div class="config-modal-footer">
+                <button class="btn-cancel" onclick="closeModal('productModal')">Cancelar</button>
+                <button class="btn-save" onclick="saveProduct()">Guardar Producto</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Overlay para sidebar móvil -->
+    <div id="sidebarOverlay" class="sidebar-overlay"></div>
+
+    <!-- Scripts -->
+    <script src="assets/js/auth.js"></script>
+    <script src="assets/js/mobile-menu.js"></script>
+    <script src="assets/js/configuracion.js"></script>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-icon">🍓</div>
+                <p class="footer-title">FRESA CON CREMA - Tu Antojito</p>
+                <p class="footer-text">Delicias frescas todos los días</p>
+            </div>
+        </div>
+    </footer>
+</body>
+
+</html>
